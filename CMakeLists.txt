@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 project(synapse_gz)
 
-find_package(gz-transport12 REQUIRED)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS)
 
@@ -14,10 +13,10 @@ find_package(ament_cmake REQUIRED)
 find_package(synapse_protobuf REQUIRED)
 find_package(synapse_tinyframe REQUIRED)
 find_package(hcdformat REQUIRED)
+find_package(gz-transport12 REQUIRED)
 
 add_executable(${PROJECT_NAME} src/${PROJECT_NAME}.cpp)
-ament_target_dependencies(${PROJECT_NAME} synapse_tinyframe synapse_protobuf)
-
+ament_target_dependencies(${PROJECT_NAME} synapse_tinyframe synapse_protobuf gz-transport12)
 
 #==========================================================
 # install
