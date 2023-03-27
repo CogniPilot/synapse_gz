@@ -14,9 +14,10 @@ find_package(synapse_protobuf REQUIRED)
 find_package(synapse_tinyframe REQUIRED)
 find_package(hcdformat REQUIRED)
 find_package(gz-transport12 REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system)
 
 add_executable(${PROJECT_NAME} src/${PROJECT_NAME}.cpp)
-ament_target_dependencies(${PROJECT_NAME} synapse_tinyframe synapse_protobuf gz-transport12)
+ament_target_dependencies(${PROJECT_NAME} synapse_tinyframe synapse_protobuf gz-transport12 Boost)
 
 #==========================================================
 # install

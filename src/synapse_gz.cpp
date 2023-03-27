@@ -15,10 +15,6 @@
 #include <boost/bind/bind.hpp>
 #include <boost/function.hpp>
 
-
-static std::atomic<bool> g_terminatePub(false);
-
-
 class GzListener : public gz::transport::Node  {
   private:
     std::string topic_sub_altimeter_;
