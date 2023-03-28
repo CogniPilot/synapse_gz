@@ -1,4 +1,7 @@
 #include <atomic>
+#include <boost/asio/connect.hpp>
+#include <boost/asio/write.hpp>
+#include <gz/transport/Node.hh>
 #include <string>
 #include <chrono>
 #include <csignal>
@@ -14,6 +17,7 @@
 
 #include <thread>
 #include <mutex>
+#include <atomic>
 
 // tcp
 #include <boost/asio/deadline_timer.hpp>
@@ -35,17 +39,27 @@
 #include "synapse_tinyframe/utils.h"
 #include "synapse_tinyframe/SynapseTopics.h"
 
+std::atomic<bool> stop{false};
+
 using boost::asio::ip::tcp;
 static const uint32_t rx_buf_length = 1024;
 std::mutex guard_rx_buf;
 static uint8_t rx_buf[rx_buf_length];
 
-static std::shared_ptr<tcp::socket> sockfd;
 static std::shared_ptr<boost::asio::deadline_timer> timer;
+static boost::asio::io_context io_context;
+static tcp::socket sockfd = tcp::socket(io_context);
+static tcp::resolver resolver(io_context);
+static TinyFrame * tf0;
 
-static TinyFrame *tf0;
+void tx_handler(const boost::system::error_code & error, std::size_t bytes_transferred) {
+    (void) bytes_transferred;
+    if (error.failed()) {
+        std::cerr << error.message() << std::endl;
+    }
+}
 
-void handler(const boost::system::error_code & error, std::size_t bytes_transferred) {
+void rx_handler(const boost::system::error_code & error, std::size_t bytes_transferred) {
     if (error.failed()) {
         std::cerr << error.message() << std::endl;
     }
@@ -56,7 +70,7 @@ void handler(const boost::system::error_code & error, std::size_t bytes_transfer
 void TF_WriteImpl(TinyFrame *tf, const uint8_t *buf, uint32_t len)
 {
     (void)tf;
-    boost::asio::async_write(*sockfd, boost::asio::buffer(buf, len), handler);
+    boost::asio::async_write(sockfd, boost::asio::buffer(buf, len), tx_handler);
 }
 
 TF_Result actuatorsListener(TinyFrame *tf, TF_Msg *frame)
@@ -100,12 +114,11 @@ TF_Result genericListener(TinyFrame *tf, TF_Msg *msg)
 }
 
 void tick(const boost::system::error_code& /*e*/) {
-    //std::cout << "tick" << std::endl;
-    // Reschedule the timer for 1 second in the future:
-    timer->expires_at(timer->expires_at() + boost::posix_time::milliseconds(1));
-    sockfd->async_read_some(boost::asio::buffer(rx_buf, rx_buf_length), handler);
-    // Posts the timer event
-    timer->async_wait(tick);
+    sockfd.async_read_some(boost::asio::buffer(rx_buf, rx_buf_length), rx_handler);
+    if (not stop) {
+        timer->expires_at(timer->expires_at() + boost::posix_time::milliseconds(100));
+        timer->async_wait(tick);
+    }
 }
 
 class GzListener : public gz::transport::Node  {
@@ -246,41 +259,54 @@ void gz_entry_point()
     std::cout << "gz thread started" << std::endl;
     std::string prefix = "/world/default/model/elm4/link/sensors/sensor/";
     GzListener listener(prefix);
-    std::cout << "waiting for shutdown " << std::endl;
-    gz::transport::waitForShutdown();
+    while (not stop) {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
 }
 
+void signal_handler(
+    const boost::system::error_code& error, int signal_number) {
+    (void)error;
+    (void)signal_number;
+    stop = true;
+}
+
+void handle_connect(
+    const boost::system::error_code& ec,
+    const boost::asio::ip::tcp::endpoint& endpoint)
+{
+    if (ec.failed()) {
+        std::cout << ec.message() << std::endl;
+    } else {
+        std::cout << "tcp connnected: " << endpoint << std::endl;
+        timer->async_wait(tick);
+    }
+}
 
 void tcp_entry_point(std::string host, int port)
 {
-    std::cout << "tcp thread started" << std::endl;
-
     // Set up the TinyFrame library
     tf0 = TF_Init(TF_MASTER); // 1 = master, 0 = slave
     tf0->usertag = 0;
+
     //TF_AddGenericListener(tf0, genericListener);
     TF_AddTypeListener(tf0, SYNAPSE_OUT_CMD_VEL_TOPIC, out_cmd_vel_Listener);
     TF_AddTypeListener(tf0, SYNAPSE_OUT_ACTUATORS_TOPIC, actuatorsListener);
 
-    boost::asio::io_context io_context;
-    sockfd = std::make_shared<tcp::socket>(io_context);
-    tcp::resolver resolver(io_context);
+    boost::asio::signal_set signals(io_context, SIGINT, SIGTERM);
 
-    timer = std::make_shared<boost::asio::deadline_timer>(io_context, boost::posix_time::seconds(1));
+    timer = std::make_shared<boost::asio::deadline_timer>(
+            io_context, boost::posix_time::seconds(1));
 
-    while (true) {
-        try
-        {
-            boost::asio::connect(*sockfd, resolver.resolve(host, std::to_string(port)));
-            timer->async_wait(tick);
-            io_context.run();
-        }
-        catch (std::exception& e)
-        {
-            std::cerr << "Exception: " << e.what() << "\n";
-        }
+    std::cout << "tcp connecting..." << std::endl;
+    signals.async_wait(signal_handler);
+    boost::asio::async_connect(
+        sockfd,
+        resolver.resolve(host, std::to_string(port)),
+        handle_connect);
+    while (not stop) {
+        io_context.run_for(std::chrono::seconds(1));
     }
-    return;
 }
 
 int main(int argc, char ** argv) {
@@ -289,7 +315,8 @@ int main(int argc, char ** argv) {
         std::cerr << argv[0] << "host port" << std::endl;
         return -1;
     }
-    std::thread tcp_thread(tcp_entry_point, argv[1], std::atoi(argv[2]));
+    std::thread tcp_thread(
+        tcp_entry_point, argv[1], std::atoi(argv[2]));
     std::thread gz_thread(gz_entry_point);
     tcp_thread.join();
     gz_thread.join();
