@@ -5,7 +5,7 @@ project(synapse_gz)
 set(CMAKE_EXPORT_COMPILE_COMMANDS)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wall -Wextra -Wpedantic -std=c++17)
 endif()
 
 # find dependencies
@@ -16,8 +16,13 @@ find_package(hcdformat REQUIRED)
 find_package(gz-transport12 REQUIRED)
 find_package(Boost COMPONENTS system REQUIRED)
 
-add_executable(${PROJECT_NAME} src/${PROJECT_NAME}.cpp)
+add_executable(${PROJECT_NAME}
+  src/${PROJECT_NAME}.cpp
+  src/clients/gz_client.cpp
+  src/clients/tcp_client.cpp
+)
 ament_target_dependencies(${PROJECT_NAME} synapse_tinyframe synapse_protobuf gz-transport12 Boost)
+target_include_directories(${PROJECT_NAME} PRIVATE src/clients)
 
 #==========================================================
 # install
