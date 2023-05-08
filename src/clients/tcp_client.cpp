@@ -14,11 +14,21 @@
 using std::placeholders::_1;
 using std::placeholders::_2;
 
+static void write_tcp(TinyFrame* tf, const uint8_t* buf, uint32_t len)
+{
+    // get tcp client attached to tf pointer in userdata
+    TcpClient * tcp_client = (TcpClient *)tf->userdata;
+
+    // write buffer to tcp client
+    tcp_client->write(buf, len);
+}
+
 TcpClient::TcpClient(std::string host, int port) : host_(host), port_(port) {
     // Set up the TinyFrame library
     std::make_unique<TinyFrame>();
     tf()->usertag = 0;
     tf()->userdata = this;
+    tf()->write = write_tcp;
     TF_AddGenericListener(tf().get(), TcpClient::genericListener);
     TF_AddTypeListener(tf().get(), SYNAPSE_OUT_CMD_VEL_TOPIC, TcpClient::out_cmd_vel_Listener);
     TF_AddTypeListener(tf().get(), SYNAPSE_OUT_ACTUATORS_TOPIC, TcpClient::actuatorsListener);
@@ -129,15 +139,6 @@ void TcpClient::write(const uint8_t *buf, uint32_t len)
     if (connected_) {
         boost::asio::async_write(sockfd_, boost::asio::buffer(buf, len), TcpClient::tx_handler);
     }
-}
-
-void TF_WriteImpl(TinyFrame *tf, const uint8_t *buf, uint32_t len)
-{
-    // get tcp client attached to tf pointer in userdata
-    TcpClient * tcp_client = (TcpClient *)tf->userdata;
-    
-    // write buffer to tcp client
-    tcp_client->write(buf, len);
 }
 
 // vi: ts=4 sw=4 et
