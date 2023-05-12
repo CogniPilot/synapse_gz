@@ -9,6 +9,7 @@
 #include <boost/date_time/posix_time/posix_time_config.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <boost/system/error_code.hpp>
+#include <google/protobuf/stubs/logging.h>
 #include <memory>
 
 using std::placeholders::_1;
@@ -23,15 +24,15 @@ static void write_tcp(TinyFrame* tf, const uint8_t* buf, uint32_t len)
     tcp_client->write(buf, len);
 }
 
-TcpClient::TcpClient(std::string host, int port) : host_(host), port_(port) {
+TcpClient::TcpClient(std::string host, int port, const std::shared_ptr<TinyFrame> & tf) : host_(host), port_(port) {
     // Set up the TinyFrame library
-    std::make_unique<TinyFrame>();
-    tf()->usertag = 0;
-    tf()->userdata = this;
-    tf()->write = write_tcp;
-    TF_AddGenericListener(tf().get(), TcpClient::genericListener);
-    TF_AddTypeListener(tf().get(), SYNAPSE_OUT_CMD_VEL_TOPIC, TcpClient::out_cmd_vel_Listener);
-    TF_AddTypeListener(tf().get(), SYNAPSE_OUT_ACTUATORS_TOPIC, TcpClient::actuatorsListener);
+    tf_ = tf;
+    tf_->usertag = 0;
+    tf_->userdata = this;
+    tf_->write = write_tcp;
+    TF_AddGenericListener(tf_.get(), TcpClient::genericListener);
+    TF_AddTypeListener(tf_.get(), SYNAPSE_OUT_CMD_VEL_TOPIC, TcpClient::out_cmd_vel_Listener);
+    TF_AddTypeListener(tf_.get(), SYNAPSE_OUT_ACTUATORS_TOPIC, TcpClient::actuatorsListener);
     timer_.async_wait(std::bind(&TcpClient::tick, this, _1));
 }
 
@@ -82,12 +83,13 @@ void TcpClient::tx_handler(const boost::system::error_code & ec, std::size_t byt
 }
 
 void TcpClient::rx_handler(const boost::system::error_code & ec, std::size_t bytes_transferred) {
+    std::cout << "rx handler" << std::endl;
     if (ec != boost::system::errc::success) {
         std::cerr << "rx error: " << ec.message() << std::endl;
         return;
     }
     const std::lock_guard<std::mutex> lock(guard_rx_buf_);
-    TF_Accept(tf().get(), rx_buf_, bytes_transferred);
+    TF_Accept(tf_.get(), rx_buf_, bytes_transferred);
 }
 
 TF_Result TcpClient::actuatorsListener(TinyFrame *tf, TF_Msg *frame)
@@ -126,6 +128,8 @@ TF_Result TcpClient::out_cmd_vel_Listener(TinyFrame *tf, TF_Msg *frame)
 TF_Result TcpClient::genericListener(TinyFrame *tf, TF_Msg *msg)
 {
     (void)tf;
+    int type = msg-> type;
+    std::cout << "generic listener id:" << type << std::endl;
     dumpFrameInfo(msg);
     return TF_STAY;
 }

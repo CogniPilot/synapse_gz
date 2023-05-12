@@ -8,7 +8,9 @@
 #include <gz/msgs.hh>
 
 #include "synapse_tinyframe/TinyFrame.h"
-#include "tcp_client.hpp"
+
+
+class TcpClient;
 
 
 class GzClient : public gz::transport::Node  {

@@ -10,6 +10,9 @@
 #include "synapse_tinyframe/utils.h"
 
 
+class GzClient;
+
+
 class TcpClient {
   private:
     static const uint32_t rx_buf_length_ = 1024;
@@ -23,11 +26,11 @@ class TcpClient {
     std::string host_;
     int port_;
     bool connected_{false};
+    std::shared_ptr<GzClient> gz_;
   public:
-    TcpClient(std::string host, int port);
+    TcpClient(std::string host, int port, const std::shared_ptr<TinyFrame> & tf);
     void run_for(std::chrono::seconds sec);
     void write(const uint8_t *buf, uint32_t len);
-    std::shared_ptr<TinyFrame> const & tf() { return tf_; }
   private:
     void handle_connect(
         const boost::system::error_code& ec,

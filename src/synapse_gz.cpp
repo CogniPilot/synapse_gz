@@ -1,10 +1,14 @@
 #include "clients/gz_client.hpp"
 #include "clients/tcp_client.hpp"
+#include "synapse_tinyframe/TinyFrame.h"
 
 #include <iostream>
+#include <memory>
 
 std::atomic<bool> g_stop{false};
 std::shared_ptr<TcpClient> g_tcp_client;
+std::shared_ptr<GzClient> g_gz_client;
+std::shared_ptr<TinyFrame> g_tf;
 
 void signal_handler(int signum) {
     (void)signum;
@@ -20,10 +24,9 @@ void tcp_entry_point()
     std::cout << "tcp thread stopped" << std::endl;
 }
 
-void gz_entry_point(std::string prefix)
+void gz_entry_point()
 {
     std::cout << "gz thread started" << std::endl;
-    GzClient client(prefix, g_tcp_client->tf());
     while (not g_stop) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
@@ -38,13 +41,21 @@ int main(int argc, char ** argv) {
     }
     signal(SIGINT, signal_handler);
 
-    // create tcp client
-    g_tcp_client = std::make_shared<TcpClient>(argv[1], std::atoi(argv[2]));
-    std::thread tcp_thread(tcp_entry_point);
+    // parameters
+    std::string prefix = "/world/default/model/elm4/link/sensors/sensor/";
+
+    // create tinyframe
+    g_tf = std::make_shared<TinyFrame>(*(TF_Init(TF_MASTER)));
 
     // create gz client
-    std::string prefix = "/world/default/model/elm4/link/sensors/sensor/";
-    std::thread gz_thread(gz_entry_point, prefix);
+    g_gz_client = std::make_shared<GzClient>(prefix, g_tf);
+
+    // create tcp client
+    g_tcp_client = std::make_shared<TcpClient>(argv[1], std::atoi(argv[2]), g_tf);
+    
+    // start threads
+    std::thread tcp_thread(tcp_entry_point);
+    std::thread gz_thread(gz_entry_point);
 
     // join threads
     tcp_thread.join();
