@@ -116,8 +116,6 @@ TF_Result TcpClient::actuatorsListener(TinyFrame *tf, TF_Msg *frame)
         std::cerr << "Failed to parse actuators" << std::endl;
         return TF_STAY;
     }
-    std::cout << "velocity: " << msg.velocity(0) << std::endl;
-
     gz::msgs::Actuators gz_msg;
 
     for (auto it = msg.position().begin(); it != msg.position().end(); ++it) {
