@@ -26,8 +26,8 @@ class TcpClient {
     std::string host_;
     int port_;
     bool connected_{false};
-    std::shared_ptr<GzClient> gz_;
   public:
+    std::shared_ptr<GzClient> gz_;
     TcpClient(std::string host, int port, const std::shared_ptr<TinyFrame> & tf);
     void run_for(std::chrono::seconds sec);
     void write(const uint8_t *buf, uint32_t len);

@@ -1,4 +1,5 @@
 #include "tcp_client.hpp"
+#include "gz_client.hpp"
 
 #include "synapse_protobuf/actuators.pb.h"
 #include "synapse_protobuf/twist.pb.h"
@@ -10,6 +11,8 @@
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <boost/system/error_code.hpp>
 #include <google/protobuf/stubs/logging.h>
+#include <gz/msgs/actuators.pb.h>
+#include <gz/msgs/details/actuators.pb.h>
 #include <memory>
 
 using std::placeholders::_1;
@@ -83,7 +86,6 @@ void TcpClient::tx_handler(const boost::system::error_code & ec, std::size_t byt
 }
 
 void TcpClient::rx_handler(const boost::system::error_code & ec, std::size_t bytes_transferred) {
-    std::cout << "rx handler" << std::endl;
     if (ec != boost::system::errc::success) {
         std::cerr << "rx error: " << ec.message() << std::endl;
         return;
@@ -92,15 +94,45 @@ void TcpClient::rx_handler(const boost::system::error_code & ec, std::size_t byt
     TF_Accept(tf_.get(), rx_buf_, bytes_transferred);
 }
 
+void my_log_handler(google::protobuf::LogLevel level, const char * filename, int line, const std::string & message) {
+    static const char* level_names[] = { "INFO", "WARNING", "ERROR", "FATAL" };
+    fprintf(stderr, "[libprotobuf %s %s:%d] %s\n",
+          level_names[level], filename, line, message.c_str());
+    fflush(stderr);  // Needed on MSVC.
+}
+
+
 TF_Result TcpClient::actuatorsListener(TinyFrame *tf, TF_Msg *frame)
 {
     (void)tf;
+    google::protobuf::SetLogHandler(my_log_handler);
     Actuators msg;
-    std::string data((char *)frame->data, frame->len);
-    if (!msg.ParseFromString(data)) {
+
+    // get tcp client attached to tf pointer in userdata
+    TcpClient * tcp_client = (TcpClient *)tf->userdata;
+    GzClient * gz_client = tcp_client->gz_.get();
+
+    if (!msg.ParseFromArray(frame->data, frame->len)) {
         std::cerr << "Failed to parse actuators" << std::endl;
         return TF_STAY;
     }
+    std::cout << "velocity: " << msg.velocity(0) << std::endl;
+
+    gz::msgs::Actuators gz_msg;
+
+    for (auto it = msg.position().begin(); it != msg.position().end(); ++it) {
+        gz_msg.add_position(*it);
+    }
+
+    for (auto it = msg.velocity().begin(); it != msg.velocity().end(); ++it) {
+        gz_msg.add_velocity(*it);
+    }
+
+    for (auto it = msg.normalized().begin(); it != msg.normalized().end(); ++it) {
+        gz_msg.add_normalized(*it);
+    }
+
+    gz_client->pub_actuators_.Publish(gz_msg);
     return TF_STAY;
 }
 
@@ -108,8 +140,7 @@ TF_Result TcpClient::out_cmd_vel_Listener(TinyFrame *tf, TF_Msg *frame)
 {
     (void)tf;
     Twist msg;
-    std::string data((char *)frame->data, frame->len);
-    if (!msg.ParseFromString(data)) {
+    if (!msg.ParseFromArray(frame->data, frame->len)) {
         std::cerr << "Failed to out_cmd_vel" << std::endl;
         return TF_STAY;
     } else {

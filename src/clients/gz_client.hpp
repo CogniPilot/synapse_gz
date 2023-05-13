@@ -1,6 +1,7 @@
 #ifndef GZ_CLIENT_HPP
 #define GZ_CLIENT_HPP
 
+#include <gz/transport/Publisher.hh>
 #include <memory>
 #include <string>
 
@@ -23,6 +24,7 @@ class GzClient : public gz::transport::Node  {
     std::string topic_pub_actuators_;
     std::shared_ptr<TinyFrame> tf_;
   public:
+    gz::transport::Node::Publisher pub_actuators_;
     GzClient(std::string prefix, std::shared_ptr<TinyFrame> const & tf);
     void tf_send(TF_Msg & frame);
     void handle_Clock(const gz::msgs::Clock &msg);

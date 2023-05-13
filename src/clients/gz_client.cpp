@@ -56,8 +56,8 @@ GzClient::GzClient(std::string prefix, std::shared_ptr<TinyFrame> const & tf) :
     }
 
     // actuators pub
-    auto pub = Advertise<gz::msgs::Actuators>(topic_pub_actuators_);
-    if (!pub)
+    pub_actuators_ = Advertise<gz::msgs::Actuators>(topic_pub_actuators_);
+    if (!pub_actuators_)
     {
         std::runtime_error("Error advertising topic " + topic_pub_actuators_);
     }

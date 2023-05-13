@@ -52,6 +52,7 @@ int main(int argc, char ** argv) {
 
     // create tcp client
     g_tcp_client = std::make_shared<TcpClient>(argv[1], std::atoi(argv[2]), g_tf);
+    g_tcp_client.get()->gz_ = g_gz_client;
     
     // start threads
     std::thread tcp_thread(tcp_entry_point);
