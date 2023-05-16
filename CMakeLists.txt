@@ -9,6 +9,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 # find dependencies
+find_package(rclcpp REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(synapse_protobuf REQUIRED)
 find_package(synapse_tinyframe REQUIRED)
@@ -21,7 +22,7 @@ add_executable(${PROJECT_NAME}
   src/clients/gz_client.cpp
   src/clients/tcp_client.cpp
 )
-ament_target_dependencies(${PROJECT_NAME} synapse_tinyframe synapse_protobuf gz-transport12 Boost)
+ament_target_dependencies(${PROJECT_NAME} synapse_tinyframe synapse_protobuf gz-transport12 Boost rclcpp)
 target_include_directories(${PROJECT_NAME} PRIVATE src/clients)
 
 #==========================================================
@@ -32,6 +33,13 @@ install(TARGETS
   ${PROJECT_NAME}
   DESTINATION lib/${PROJECT_NAME}
 )
+
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}
+)
+
+
 
 #==========================================================
 # testing
