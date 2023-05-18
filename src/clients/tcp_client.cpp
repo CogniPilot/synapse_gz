@@ -12,7 +12,6 @@
 #include <boost/system/error_code.hpp>
 #include <google/protobuf/stubs/logging.h>
 #include <gz/msgs/actuators.pb.h>
-#include <gz/msgs/details/actuators.pb.h>
 #include <memory>
 
 using std::placeholders::_1;
