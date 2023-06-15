@@ -7,6 +7,7 @@
 #include "synapse_protobuf/odometry.pb.h"
 
 #include "synapse_tinyframe/SynapseTopics.h"
+#include <boost/asio/error.hpp>
 #include <boost/date_time/posix_time/posix_time_config.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <boost/system/error_code.hpp>
@@ -50,7 +51,7 @@ void TcpClient::handle_connect(
         }
     } else {
         connected_ = true;
-        std::cout << "tcp connnected: " << endpoint << std::endl;
+        std::cout << "tcp connected: " << endpoint << std::endl;
     }
 }
 
@@ -59,7 +60,7 @@ void TcpClient::tick(const boost::system::error_code& /*e*/) {
         sockfd_.async_receive(boost::asio::buffer(rx_buf_, rx_buf_length_),
                 std::bind(&TcpClient::rx_handler, this, _1, _2));
     } else {
-        std::cout << "tcp connecting..." << std::endl;
+        std::cout << "tcp connecting to: " << host_ << ":" << port_ << std::endl;
         boost::asio::async_connect(
             sockfd_,
             resolver_.resolve(host_, std::to_string(port_)),
@@ -79,9 +80,6 @@ void TcpClient::tick(const boost::system::error_code& /*e*/) {
 
 void TcpClient::tx_handler(const boost::system::error_code & ec, std::size_t bytes_transferred) {
     (void)bytes_transferred;
-    if (ec != boost::system::errc::success) {
-        std::cerr << "tx error: " << ec.message() << std::endl;
-    }
     if (ec == boost::asio::error::eof) {
         std::cerr << "reconnecting due to eof" << std::endl;
         connected_ = false;
@@ -118,7 +116,6 @@ void my_log_handler(google::protobuf::LogLevel level, const char * filename, int
 
 TF_Result TcpClient::actuatorsListener(TinyFrame *tf, TF_Msg *frame)
 {
-    (void)tf;
     google::protobuf::SetLogHandler(my_log_handler);
     Actuators msg;
 
