@@ -117,7 +117,7 @@ void my_log_handler(google::protobuf::LogLevel level, const char * filename, int
 TF_Result TcpClient::actuatorsListener(TinyFrame *tf, TF_Msg *frame)
 {
     google::protobuf::SetLogHandler(my_log_handler);
-    Actuators msg;
+    synapse::msgs::Actuators msg;
 
     // get tcp client attached to tf pointer in userdata
     TcpClient * tcp_client = (TcpClient *)tf->userdata;
@@ -148,7 +148,7 @@ TF_Result TcpClient::actuatorsListener(TinyFrame *tf, TF_Msg *frame)
 TF_Result TcpClient::out_cmd_vel_Listener(TinyFrame *tf, TF_Msg *frame)
 {
     (void)tf;
-    Twist msg;
+    synapse::msgs::Twist msg;
     if (!msg.ParseFromArray(frame->data, frame->len)) {
         std::cerr << "Failed to out_cmd_vel" << std::endl;
         return TF_STAY;
