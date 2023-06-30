@@ -24,25 +24,25 @@ GzClient::GzClient(std::string prefix, std::shared_ptr<TinyFrame> const& tf)
     }
 
     // altimeter sub
-    boost::function<void(const gz::msgs::Altimeter&)> f_altimeter(
-        boost::bind(&GzClient::handle_Altimeter, this, boost::placeholders::_1));
-    if (!Subscribe<gz::msgs::Altimeter>(topic_sub_altimeter_, f_altimeter)) {
-        std::runtime_error("Error subscribing to topic " + topic_sub_altimeter_);
-    }
+    //boost::function<void(const gz::msgs::Altimeter&)> f_altimeter(
+        //boost::bind(&GzClient::handle_Altimeter, this, boost::placeholders::_1));
+    //if (!Subscribe<gz::msgs::Altimeter>(topic_sub_altimeter_, f_altimeter)) {
+        //std::runtime_error("Error subscribing to topic " + topic_sub_altimeter_);
+    //}
 
     // imu sub
-    boost::function<void(const gz::msgs::IMU&)> f_IMU(
-        boost::bind(&GzClient::handle_IMU, this, boost::placeholders::_1));
-    if (!Subscribe<gz::msgs::IMU>(topic_sub_imu_, f_IMU)) {
-        std::runtime_error("Error subscribing to topic " + topic_sub_imu_);
-    }
+    //boost::function<void(const gz::msgs::IMU&)> f_IMU(
+        //boost::bind(&GzClient::handle_IMU, this, boost::placeholders::_1));
+    //if (!Subscribe<gz::msgs::IMU>(topic_sub_imu_, f_IMU)) {
+        //std::runtime_error("Error subscribing to topic " + topic_sub_imu_);
+    //}
 
     // magnetometer sub
-    boost::function<void(const gz::msgs::Magnetometer&)> cb_mag(
-        boost::bind(&GzClient::handle_Magnetometer, this, boost::placeholders::_1));
-    if (!Subscribe<gz::msgs::Magnetometer>(topic_sub_magnetometer_, cb_mag)) {
-        std::runtime_error("Error subscribing to topic " + topic_sub_magnetometer_);
-    }
+    //boost::function<void(const gz::msgs::Magnetometer&)> cb_mag(
+        //boost::bind(&GzClient::handle_Magnetometer, this, boost::placeholders::_1));
+    //if (!Subscribe<gz::msgs::Magnetometer>(topic_sub_magnetometer_, cb_mag)) {
+        //std::runtime_error("Error subscribing to topic " + topic_sub_magnetometer_);
+    //}
 
     // navsat sub
     boost::function<void(const gz::msgs::NavSat&)> cb_navsat(
