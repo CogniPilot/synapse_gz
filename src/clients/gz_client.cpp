@@ -4,6 +4,7 @@
 #include <boost/function.hpp>
 
 #include <synapse_tinyframe/SynapseTopics.h>
+#include <synapse_protobuf/nav_sat_fix.pb.h>
 
 GzClient::GzClient(std::string prefix, std::shared_ptr<TinyFrame> const& tf)
     : tf_(tf)
@@ -69,6 +70,7 @@ void GzClient::handle_Clock(const gz::msgs::Clock& msg)
     std::string data;
     if (!msg.SerializeToString(&data)) {
         std::cerr << "Failed to serialize Clock" << std::endl;
+        return;
     }
     frame.len = data.length();
     frame.data = (const uint8_t*)data.c_str();
@@ -82,6 +84,7 @@ void GzClient::handle_Magnetometer(const gz::msgs::Magnetometer& msg)
     std::string data;
     if (!msg.SerializeToString(&data)) {
         std::cerr << "Failed to serialize Magnetometer" << std::endl;
+        return;
     }
     frame.len = data.length();
     frame.data = (const uint8_t*)data.c_str();
@@ -95,6 +98,7 @@ void GzClient::handle_IMU(const gz::msgs::IMU& msg)
     std::string data;
     if (!msg.SerializeToString(&data)) {
         std::cerr << "Failed to serialize IMU" << std::endl;
+        return;
     }
     frame.len = data.length();
     frame.data = (const uint8_t*)data.c_str();
@@ -105,9 +109,21 @@ void GzClient::handle_NavSat(const gz::msgs::NavSat& msg)
 {
     TF_Msg frame;
     frame.type = SYNAPSE_IN_NAVSAT_TOPIC;
+    synapse::msgs::NavSatFix syn_msg;
+
+    syn_msg.mutable_header()->set_frame_id(msg.frame_id());
+    syn_msg.mutable_header()->mutable_stamp()->set_seconds(
+            msg.header().stamp().sec());
+    syn_msg.mutable_header()->mutable_stamp()->set_nanos(
+            msg.header().stamp().nsec());
+    syn_msg.set_latitude(msg.latitude_deg());
+    syn_msg.set_longitude(msg.longitude_deg());
+    syn_msg.set_altitude(msg.altitude());
+
     std::string data;
-    if (!msg.SerializeToString(&data)) {
+    if (!syn_msg.SerializeToString(&data)) {
         std::cerr << "Failed to serialize NavSat" << std::endl;
+        return;
     }
     frame.len = data.length();
     frame.data = (const uint8_t*)data.c_str();
@@ -121,6 +137,7 @@ void GzClient::handle_Altimeter(const gz::msgs::Altimeter& msg)
     std::string data;
     if (!msg.SerializeToString(&data)) {
         std::cerr << "Failed to serialize IMU" << std::endl;
+        return;
     }
     frame.len = data.length();
     frame.data = (const uint8_t*)data.c_str();

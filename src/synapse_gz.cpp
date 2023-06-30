@@ -58,7 +58,7 @@ public:
         int port = this->get_parameter("port").as_int();
 
         // parameters
-        std::string prefix = "/world/default/model/elm4/link/sensors/sensor/";
+        std::string prefix = "/world/default/model/mrbuggy3/link/sensors/sensor/";
 
         // create tinyframe
         g_tf = std::make_shared<TinyFrame>(*(TF_Init(TF_MASTER)));

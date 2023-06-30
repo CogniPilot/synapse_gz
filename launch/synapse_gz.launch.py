@@ -11,6 +11,9 @@ ARGUMENTS = [
                           description='port for gz sim'),
     DeclareLaunchArgument('port', default_value='4241',
                           description='tcp port for cerebri'),
+    DeclareLaunchArgument('log_level', default_value='error',
+                          choices=['info', 'warn', 'error'],
+                          description='log level'),
 ]
 
 
@@ -27,6 +30,7 @@ def generate_launch_description():
             'host': LaunchConfiguration('host'),
             'port': LaunchConfiguration('port')
         }],
+        arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')],
         output='screen')
 
     ld = LaunchDescription(ARGUMENTS)
