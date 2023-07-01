@@ -66,7 +66,7 @@ void GzClient::tf_send(TF_Msg& frame)
 void GzClient::handle_Clock(const gz::msgs::Clock& msg)
 {
     TF_Msg frame;
-    frame.type = SYNAPSE_SIM_CLOCK_TOPIC;
+    frame.type = SYNAPSE_IN_SIM_CLOCK_TOPIC;
     std::string data;
     if (!msg.SerializeToString(&data)) {
         std::cerr << "Failed to serialize Clock" << std::endl;
@@ -112,9 +112,9 @@ void GzClient::handle_NavSat(const gz::msgs::NavSat& msg)
     synapse::msgs::NavSatFix syn_msg;
 
     syn_msg.mutable_header()->set_frame_id(msg.frame_id());
-    syn_msg.mutable_header()->mutable_stamp()->set_seconds(
+    syn_msg.mutable_header()->mutable_stamp()->set_sec(
             msg.header().stamp().sec());
-    syn_msg.mutable_header()->mutable_stamp()->set_nanos(
+    syn_msg.mutable_header()->mutable_stamp()->set_nanosec(
             msg.header().stamp().nsec());
     syn_msg.set_latitude(msg.latitude_deg());
     syn_msg.set_longitude(msg.longitude_deg());
