@@ -3,18 +3,31 @@
 #include <boost/bind/bind.hpp>
 #include <boost/function.hpp>
 
+#include <gz/msgs/details/battery.pb.h>
+#include <gz/msgs/details/battery_state.pb.h>
 #include <synapse_tinyframe/SynapseTopics.h>
 #include <synapse_protobuf/nav_sat_fix.pb.h>
+#include <synapse_protobuf/battery_state.pb.h>
 
-GzClient::GzClient(std::string prefix, std::shared_ptr<TinyFrame> const& tf)
+GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
     : tf_(tf)
 {
+    std::string model_prefix = "/model/" + vehicle;
+    std::string world_prefix = "/world/default" + model_prefix;
+    std::string sensor_prefix = world_prefix + "/link/sensors/sensor";
     topic_sub_clock_ = "/clock";
-    topic_sub_altimeter_ = prefix + "altimeter_sensor/altimeter";
-    topic_sub_imu_ = prefix + "imu_sensor/imu";
-    topic_sub_magnetometer_ = prefix + "mag_sensor/magnetometer";
-    topic_sub_navsat_ = prefix + "navsat_sensor/navsat";
+    
+    // sensors
+    topic_sub_altimeter_ = sensor_prefix + "/altimeter_sensor/altimeter";
+    topic_sub_imu_ = sensor_prefix + "/imu_sensor/imu";
+    topic_sub_magnetometer_ = sensor_prefix + "/mag_sensor/magnetometer";
+    topic_sub_navsat_ = sensor_prefix + "/navsat_sensor/navsat";
+
+    // actuators
     topic_pub_actuators_ = "/actuators";
+
+    // model prefix
+    topic_sub_battery_state_ = model_prefix + "/battery/linear_battery/state";
 
     // clock sub
     boost::function<void(const gz::msgs::Clock&)> f_clock(
@@ -51,6 +64,13 @@ GzClient::GzClient(std::string prefix, std::shared_ptr<TinyFrame> const& tf)
         std::runtime_error("Error subscribing to topic " + topic_sub_navsat_);
     }
 
+    // battery sub
+    boost::function<void(const gz::msgs::BatteryState&)> cb_battery_state(
+        boost::bind(&GzClient::handle_BatteryState, this, boost::placeholders::_1));
+    if (!Subscribe<gz::msgs::BatteryState>(topic_sub_battery_state_, cb_battery_state)) {
+        std::runtime_error("Error subscribing to topic " + topic_sub_battery_state_);
+    }
+
     // actuators pub
     pub_actuators_ = Advertise<gz::msgs::Actuators>(topic_pub_actuators_);
     if (!pub_actuators_) {
@@ -69,7 +89,7 @@ void GzClient::handle_Clock(const gz::msgs::Clock& msg)
     frame.type = SYNAPSE_IN_SIM_CLOCK_TOPIC;
     std::string data;
     if (!msg.SerializeToString(&data)) {
-        std::cerr << "Failed to serialize Clock" << std::endl;
+        std::cerr << "Failed to serialize SimClock" << std::endl;
         return;
     }
     frame.len = data.length();
@@ -143,5 +163,37 @@ void GzClient::handle_Altimeter(const gz::msgs::Altimeter& msg)
     frame.data = (const uint8_t*)data.c_str();
     tf_send(frame);
 }
+
+void GzClient::handle_BatteryState(const gz::msgs::BatteryState& msg)
+{
+    TF_Msg frame;
+    frame.type = SYNAPSE_IN_BATTERY_STATE_TOPIC;
+    std::string data;
+    synapse::msgs::BatteryState syn_msg;
+    syn_msg.set_voltage(msg.voltage());
+    syn_msg.set_current(msg.current());
+    syn_msg.set_charge(msg.charge());
+    syn_msg.set_capacity(msg.capacity());
+    syn_msg.set_percentage(msg.percentage());
+
+    static std::map<gz::msgs::BatteryState::PowerSupplyStatus, synapse::msgs::BatteryState::PowerSupplyStatus> power_supply_status_map = {
+        {gz::msgs::BatteryState_PowerSupplyStatus_UNKNOWN, synapse::msgs::BatteryState_PowerSupplyStatus_UNKNOWN_STATUS},
+        {gz::msgs::BatteryState_PowerSupplyStatus_CHARGING, synapse::msgs::BatteryState_PowerSupplyStatus_CHARGING},
+        {gz::msgs::BatteryState_PowerSupplyStatus_DISCHARGING, synapse::msgs::BatteryState_PowerSupplyStatus_DISCHARGING},
+        {gz::msgs::BatteryState_PowerSupplyStatus_NOT_CHARGING, synapse::msgs::BatteryState_PowerSupplyStatus_NOT_CHARGING},
+        {gz::msgs::BatteryState_PowerSupplyStatus_FULL, synapse::msgs::BatteryState_PowerSupplyStatus_FULL}};
+
+    syn_msg.set_power_supply_status(power_supply_status_map[msg.power_supply_status()]);
+
+    if (!syn_msg.SerializeToString(&data)) {
+        std::cerr << "Failed to serialize BatteryState" << std::endl;
+        return;
+    }
+    frame.len = data.length();
+    frame.data = (const uint8_t*)data.c_str();
+    tf_send(frame);
+}
+
+
 
 // vi: ts=4 sw=4 et

@@ -20,6 +20,7 @@ private:
     std::string topic_sub_magnetometer_;
     std::string topic_sub_navsat_;
     std::string topic_pub_actuators_;
+    std::string topic_sub_battery_state_;
     std::shared_ptr<TinyFrame> tf_;
 
 public:
@@ -32,6 +33,7 @@ public:
     void handle_IMU(const gz::msgs::IMU& msg);
     void handle_NavSat(const gz::msgs::NavSat& msg);
     void handle_Altimeter(const gz::msgs::Altimeter& msg);
+    void handle_BatteryState(const gz::msgs::BatteryState& msg);
 };
 
 // vi: ts=4 sw=4 et

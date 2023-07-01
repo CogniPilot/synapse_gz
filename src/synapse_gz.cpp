@@ -53,18 +53,17 @@ public:
     {
         this->declare_parameter("host", "127.0.0.1");
         this->declare_parameter("port", 4241);
+        this->declare_parameter("vehicle", "mrbuggy3");
 
         std::string host = this->get_parameter("host").as_string();
         int port = this->get_parameter("port").as_int();
-
-        // parameters
-        std::string prefix = "/world/default/model/mrbuggy3/link/sensors/sensor/";
+        std::string vehicle = this->get_parameter("vehicle").as_string();
 
         // create tinyframe
         g_tf = std::make_shared<TinyFrame>(*(TF_Init(TF_MASTER)));
 
         // create gz client
-        g_gz_client = std::make_shared<GzClient>(prefix, g_tf);
+        g_gz_client = std::make_shared<GzClient>(vehicle, g_tf);
 
         // create tcp client
         g_tcp_client = std::make_shared<TcpClient>(host, port, g_tf);
