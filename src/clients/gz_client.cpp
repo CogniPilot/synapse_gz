@@ -6,12 +6,12 @@
 #include <gz/msgs/details/battery.pb.h>
 #include <gz/msgs/details/battery_state.pb.h>
 #include <gz/msgs/details/magnetometer.pb.h>
-#include <synapse_tinyframe/SynapseTopics.h>
+#include <synapse_protobuf/battery_state.pb.h>
 #include <synapse_protobuf/imu.pb.h>
 #include <synapse_protobuf/magnetic_field.pb.h>
-#include <synapse_protobuf/sim_clock.pb.h>
 #include <synapse_protobuf/nav_sat_fix.pb.h>
-#include <synapse_protobuf/battery_state.pb.h>
+#include <synapse_protobuf/sim_clock.pb.h>
+#include <synapse_tinyframe/SynapseTopics.h>
 
 GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
     : tf_(tf)
@@ -20,7 +20,7 @@ GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
     std::string world_prefix = "/world/default" + model_prefix;
     std::string sensor_prefix = world_prefix + "/link/sensors/sensor";
     topic_sub_clock_ = "/clock";
-    
+
     // sensors
     topic_sub_altimeter_ = sensor_prefix + "/altimeter_sensor/altimeter";
     topic_sub_imu_ = sensor_prefix + "/imu_sensor/imu";
@@ -152,9 +152,9 @@ void GzClient::handle_NavSat(const gz::msgs::NavSat& msg)
     synapse::msgs::NavSatFix syn_msg;
     syn_msg.mutable_header()->set_frame_id(msg.frame_id());
     syn_msg.mutable_header()->mutable_stamp()->set_sec(
-            msg.header().stamp().sec());
+        msg.header().stamp().sec());
     syn_msg.mutable_header()->mutable_stamp()->set_nanosec(
-            msg.header().stamp().nsec());
+        msg.header().stamp().nsec());
     syn_msg.set_latitude(msg.latitude_deg());
     syn_msg.set_longitude(msg.longitude_deg());
     syn_msg.set_altitude(msg.altitude());
@@ -198,11 +198,12 @@ void GzClient::handle_BatteryState(const gz::msgs::BatteryState& msg)
     syn_msg.set_percentage(msg.percentage());
 
     static std::map<gz::msgs::BatteryState::PowerSupplyStatus, synapse::msgs::BatteryState::PowerSupplyStatus> power_supply_status_map = {
-        {gz::msgs::BatteryState_PowerSupplyStatus_UNKNOWN, synapse::msgs::BatteryState_PowerSupplyStatus_UNKNOWN_STATUS},
-        {gz::msgs::BatteryState_PowerSupplyStatus_CHARGING, synapse::msgs::BatteryState_PowerSupplyStatus_CHARGING},
-        {gz::msgs::BatteryState_PowerSupplyStatus_DISCHARGING, synapse::msgs::BatteryState_PowerSupplyStatus_DISCHARGING},
-        {gz::msgs::BatteryState_PowerSupplyStatus_NOT_CHARGING, synapse::msgs::BatteryState_PowerSupplyStatus_NOT_CHARGING},
-        {gz::msgs::BatteryState_PowerSupplyStatus_FULL, synapse::msgs::BatteryState_PowerSupplyStatus_FULL}};
+        { gz::msgs::BatteryState_PowerSupplyStatus_UNKNOWN, synapse::msgs::BatteryState_PowerSupplyStatus_UNKNOWN_STATUS },
+        { gz::msgs::BatteryState_PowerSupplyStatus_CHARGING, synapse::msgs::BatteryState_PowerSupplyStatus_CHARGING },
+        { gz::msgs::BatteryState_PowerSupplyStatus_DISCHARGING, synapse::msgs::BatteryState_PowerSupplyStatus_DISCHARGING },
+        { gz::msgs::BatteryState_PowerSupplyStatus_NOT_CHARGING, synapse::msgs::BatteryState_PowerSupplyStatus_NOT_CHARGING },
+        { gz::msgs::BatteryState_PowerSupplyStatus_FULL, synapse::msgs::BatteryState_PowerSupplyStatus_FULL }
+    };
 
     syn_msg.set_power_supply_status(power_supply_status_map[msg.power_supply_status()]);
 
@@ -214,7 +215,5 @@ void GzClient::handle_BatteryState(const gz::msgs::BatteryState& msg)
     frame.data = (const uint8_t*)data.c_str();
     tf_send(frame);
 }
-
-
 
 // vi: ts=4 sw=4 et

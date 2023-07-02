@@ -24,7 +24,7 @@ private:
     std::shared_ptr<TinyFrame> tf_;
 
 public:
-    TcpClient * tcp_client_;
+    TcpClient* tcp_client_;
     gz::transport::Node::Publisher pub_actuators_;
     GzClient(std::string prefix, std::shared_ptr<TinyFrame> const& tf);
     void tf_send(TF_Msg& frame);
