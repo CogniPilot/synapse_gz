@@ -5,7 +5,11 @@
 
 #include <gz/msgs/details/battery.pb.h>
 #include <gz/msgs/details/battery_state.pb.h>
+#include <gz/msgs/details/magnetometer.pb.h>
 #include <synapse_tinyframe/SynapseTopics.h>
+#include <synapse_protobuf/imu.pb.h>
+#include <synapse_protobuf/magnetic_field.pb.h>
+#include <synapse_protobuf/sim_clock.pb.h>
 #include <synapse_protobuf/nav_sat_fix.pb.h>
 #include <synapse_protobuf/battery_state.pb.h>
 
@@ -33,48 +37,48 @@ GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
     boost::function<void(const gz::msgs::Clock&)> f_clock(
         boost::bind(&GzClient::handle_Clock, this, boost::placeholders::_1));
     if (!Subscribe<gz::msgs::Clock>(topic_sub_clock_, f_clock)) {
-        std::runtime_error("Error subscribing to topic " + topic_sub_clock_);
+        throw std::runtime_error("Error subscribing to topic " + topic_sub_clock_);
     }
 
     // altimeter sub
-    //boost::function<void(const gz::msgs::Altimeter&)> f_altimeter(
-        //boost::bind(&GzClient::handle_Altimeter, this, boost::placeholders::_1));
-    //if (!Subscribe<gz::msgs::Altimeter>(topic_sub_altimeter_, f_altimeter)) {
-        //std::runtime_error("Error subscribing to topic " + topic_sub_altimeter_);
-    //}
+    boost::function<void(const gz::msgs::Altimeter&)> f_altimeter(
+        boost::bind(&GzClient::handle_Altimeter, this, boost::placeholders::_1));
+    if (!Subscribe<gz::msgs::Altimeter>(topic_sub_altimeter_, f_altimeter)) {
+        throw std::runtime_error("Error subscribing to topic " + topic_sub_altimeter_);
+    }
 
     // imu sub
-    //boost::function<void(const gz::msgs::IMU&)> f_IMU(
-        //boost::bind(&GzClient::handle_IMU, this, boost::placeholders::_1));
-    //if (!Subscribe<gz::msgs::IMU>(topic_sub_imu_, f_IMU)) {
-        //std::runtime_error("Error subscribing to topic " + topic_sub_imu_);
-    //}
+    boost::function<void(const gz::msgs::IMU&)> f_IMU(
+        boost::bind(&GzClient::handle_IMU, this, boost::placeholders::_1));
+    if (!Subscribe<gz::msgs::IMU>(topic_sub_imu_, f_IMU)) {
+        throw std::runtime_error("Error subscribing to topic " + topic_sub_imu_);
+    }
 
     // magnetometer sub
-    //boost::function<void(const gz::msgs::Magnetometer&)> cb_mag(
-        //boost::bind(&GzClient::handle_Magnetometer, this, boost::placeholders::_1));
-    //if (!Subscribe<gz::msgs::Magnetometer>(topic_sub_magnetometer_, cb_mag)) {
-        //std::runtime_error("Error subscribing to topic " + topic_sub_magnetometer_);
-    //}
+    boost::function<void(const gz::msgs::Magnetometer&)> cb_mag(
+        boost::bind(&GzClient::handle_Magnetometer, this, boost::placeholders::_1));
+    if (!Subscribe<gz::msgs::Magnetometer>(topic_sub_magnetometer_, cb_mag)) {
+        throw std::runtime_error("Error subscribing to topic " + topic_sub_magnetometer_);
+    }
 
     // navsat sub
     boost::function<void(const gz::msgs::NavSat&)> cb_navsat(
         boost::bind(&GzClient::handle_NavSat, this, boost::placeholders::_1));
     if (!Subscribe<gz::msgs::NavSat>(topic_sub_navsat_, cb_navsat)) {
-        std::runtime_error("Error subscribing to topic " + topic_sub_navsat_);
+        throw std::runtime_error("Error subscribing to topic " + topic_sub_navsat_);
     }
 
     // battery sub
     boost::function<void(const gz::msgs::BatteryState&)> cb_battery_state(
         boost::bind(&GzClient::handle_BatteryState, this, boost::placeholders::_1));
     if (!Subscribe<gz::msgs::BatteryState>(topic_sub_battery_state_, cb_battery_state)) {
-        std::runtime_error("Error subscribing to topic " + topic_sub_battery_state_);
+        throw std::runtime_error("Error subscribing to topic " + topic_sub_battery_state_);
     }
 
     // actuators pub
     pub_actuators_ = Advertise<gz::msgs::Actuators>(topic_pub_actuators_);
     if (!pub_actuators_) {
-        std::runtime_error("Error advertising topic " + topic_pub_actuators_);
+        throw std::runtime_error("Error advertising topic " + topic_pub_actuators_);
     }
 }
 
@@ -87,6 +91,7 @@ void GzClient::handle_Clock(const gz::msgs::Clock& msg)
 {
     TF_Msg frame;
     frame.type = SYNAPSE_IN_SIM_CLOCK_TOPIC;
+    // syn msg 1-to-1 with gazebo, can pass directly
     std::string data;
     if (!msg.SerializeToString(&data)) {
         std::cerr << "Failed to serialize SimClock" << std::endl;
@@ -100,9 +105,15 @@ void GzClient::handle_Clock(const gz::msgs::Clock& msg)
 void GzClient::handle_Magnetometer(const gz::msgs::Magnetometer& msg)
 {
     TF_Msg frame;
-    frame.type = SYNAPSE_IN_MAG_TOPIC;
+    frame.type = SYNAPSE_IN_MAGNETIC_FIELD_TOPIC;
+
+    synapse::msgs::MagneticField syn_msg;
+    syn_msg.mutable_magnetic_field()->set_x(msg.field_tesla().x());
+    syn_msg.mutable_magnetic_field()->set_y(msg.field_tesla().y());
+    syn_msg.mutable_magnetic_field()->set_z(msg.field_tesla().z());
+
     std::string data;
-    if (!msg.SerializeToString(&data)) {
+    if (!syn_msg.SerializeToString(&data)) {
         std::cerr << "Failed to serialize Magnetometer" << std::endl;
         return;
     }
@@ -115,8 +126,17 @@ void GzClient::handle_IMU(const gz::msgs::IMU& msg)
 {
     TF_Msg frame;
     frame.type = SYNAPSE_IN_IMU_TOPIC;
+
+    synapse::msgs::Imu syn_msg;
+    syn_msg.mutable_linear_acceleration()->set_x(msg.linear_acceleration().x());
+    syn_msg.mutable_linear_acceleration()->set_y(msg.linear_acceleration().y());
+    syn_msg.mutable_linear_acceleration()->set_z(msg.linear_acceleration().z());
+    syn_msg.mutable_angular_velocity()->set_x(msg.angular_velocity().x());
+    syn_msg.mutable_angular_velocity()->set_y(msg.angular_velocity().y());
+    syn_msg.mutable_angular_velocity()->set_z(msg.angular_velocity().z());
+
     std::string data;
-    if (!msg.SerializeToString(&data)) {
+    if (!syn_msg.SerializeToString(&data)) {
         std::cerr << "Failed to serialize IMU" << std::endl;
         return;
     }
@@ -128,9 +148,8 @@ void GzClient::handle_IMU(const gz::msgs::IMU& msg)
 void GzClient::handle_NavSat(const gz::msgs::NavSat& msg)
 {
     TF_Msg frame;
-    frame.type = SYNAPSE_IN_NAVSAT_TOPIC;
+    frame.type = SYNAPSE_IN_NAV_SAT_FIX_TOPIC;
     synapse::msgs::NavSatFix syn_msg;
-
     syn_msg.mutable_header()->set_frame_id(msg.frame_id());
     syn_msg.mutable_header()->mutable_stamp()->set_sec(
             msg.header().stamp().sec());
@@ -153,8 +172,9 @@ void GzClient::handle_NavSat(const gz::msgs::NavSat& msg)
 void GzClient::handle_Altimeter(const gz::msgs::Altimeter& msg)
 {
     TF_Msg frame;
-    frame.type = SYNAPSE_IN_ALT_TOPIC;
+    frame.type = SYNAPSE_IN_ALTIMETER_TOPIC;
     std::string data;
+    // syn msg 1-to-1 with gazebo, can pass directly
     if (!msg.SerializeToString(&data)) {
         std::cerr << "Failed to serialize IMU" << std::endl;
         return;
@@ -169,6 +189,7 @@ void GzClient::handle_BatteryState(const gz::msgs::BatteryState& msg)
     TF_Msg frame;
     frame.type = SYNAPSE_IN_BATTERY_STATE_TOPIC;
     std::string data;
+
     synapse::msgs::BatteryState syn_msg;
     syn_msg.set_voltage(msg.voltage());
     syn_msg.set_current(msg.current());
