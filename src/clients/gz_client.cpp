@@ -89,14 +89,19 @@ void GzClient::tf_send(TF_Msg& frame)
 
 void GzClient::handle_Clock(const gz::msgs::Clock& msg)
 {
-    TF_Msg frame;
-    frame.type = SYNAPSE_IN_SIM_CLOCK_TOPIC;
+    // construct message
     // syn msg 1-to-1 with gazebo, can pass directly
+
+    // serialize message
     std::string data;
     if (!msg.SerializeToString(&data)) {
         std::cerr << "Failed to serialize SimClock" << std::endl;
         return;
     }
+
+    // send message
+    TF_Msg frame;
+    frame.type = SYNAPSE_IN_SIM_CLOCK_TOPIC;
     frame.len = data.length();
     frame.data = (const uint8_t*)data.c_str();
     tf_send(frame);
@@ -104,19 +109,22 @@ void GzClient::handle_Clock(const gz::msgs::Clock& msg)
 
 void GzClient::handle_Magnetometer(const gz::msgs::Magnetometer& msg)
 {
-    TF_Msg frame;
-    frame.type = SYNAPSE_IN_MAGNETIC_FIELD_TOPIC;
-
+    // construct message
     synapse::msgs::MagneticField syn_msg;
     syn_msg.mutable_magnetic_field()->set_x(msg.field_tesla().x());
     syn_msg.mutable_magnetic_field()->set_y(msg.field_tesla().y());
     syn_msg.mutable_magnetic_field()->set_z(msg.field_tesla().z());
 
+    // serialize message
     std::string data;
     if (!syn_msg.SerializeToString(&data)) {
         std::cerr << "Failed to serialize Magnetometer" << std::endl;
         return;
     }
+
+    // send message
+    TF_Msg frame;
+    frame.type = SYNAPSE_IN_MAGNETIC_FIELD_TOPIC;
     frame.len = data.length();
     frame.data = (const uint8_t*)data.c_str();
     tf_send(frame);
@@ -124,9 +132,7 @@ void GzClient::handle_Magnetometer(const gz::msgs::Magnetometer& msg)
 
 void GzClient::handle_IMU(const gz::msgs::IMU& msg)
 {
-    TF_Msg frame;
-    frame.type = SYNAPSE_IN_IMU_TOPIC;
-
+    // construct message
     synapse::msgs::Imu syn_msg;
     syn_msg.mutable_linear_acceleration()->set_x(msg.linear_acceleration().x());
     syn_msg.mutable_linear_acceleration()->set_y(msg.linear_acceleration().y());
@@ -135,11 +141,16 @@ void GzClient::handle_IMU(const gz::msgs::IMU& msg)
     syn_msg.mutable_angular_velocity()->set_y(msg.angular_velocity().y());
     syn_msg.mutable_angular_velocity()->set_z(msg.angular_velocity().z());
 
+    // serialize message
     std::string data;
     if (!syn_msg.SerializeToString(&data)) {
         std::cerr << "Failed to serialize IMU" << std::endl;
         return;
     }
+
+    // send message
+    TF_Msg frame;
+    frame.type = SYNAPSE_IN_IMU_TOPIC;
     frame.len = data.length();
     frame.data = (const uint8_t*)data.c_str();
     tf_send(frame);
@@ -147,8 +158,7 @@ void GzClient::handle_IMU(const gz::msgs::IMU& msg)
 
 void GzClient::handle_NavSat(const gz::msgs::NavSat& msg)
 {
-    TF_Msg frame;
-    frame.type = SYNAPSE_IN_NAV_SAT_FIX_TOPIC;
+    // construct message
     synapse::msgs::NavSatFix syn_msg;
     syn_msg.mutable_header()->set_frame_id(msg.frame_id());
     syn_msg.mutable_header()->mutable_stamp()->set_sec(
@@ -159,11 +169,16 @@ void GzClient::handle_NavSat(const gz::msgs::NavSat& msg)
     syn_msg.set_longitude(msg.longitude_deg());
     syn_msg.set_altitude(msg.altitude());
 
+    // serialize message
     std::string data;
     if (!syn_msg.SerializeToString(&data)) {
         std::cerr << "Failed to serialize NavSat" << std::endl;
         return;
     }
+
+    // send message
+    TF_Msg frame;
+    frame.type = SYNAPSE_IN_NAV_SAT_FIX_TOPIC;
     frame.len = data.length();
     frame.data = (const uint8_t*)data.c_str();
     tf_send(frame);
@@ -171,14 +186,19 @@ void GzClient::handle_NavSat(const gz::msgs::NavSat& msg)
 
 void GzClient::handle_Altimeter(const gz::msgs::Altimeter& msg)
 {
-    TF_Msg frame;
-    frame.type = SYNAPSE_IN_ALTIMETER_TOPIC;
-    std::string data;
+    // construct message
     // syn msg 1-to-1 with gazebo, can pass directly
+
+    // serialize message
+    std::string data;
     if (!msg.SerializeToString(&data)) {
         std::cerr << "Failed to serialize IMU" << std::endl;
         return;
     }
+
+    // send message
+    TF_Msg frame;
+    frame.type = SYNAPSE_IN_ALTIMETER_TOPIC;
     frame.len = data.length();
     frame.data = (const uint8_t*)data.c_str();
     tf_send(frame);
@@ -186,17 +206,7 @@ void GzClient::handle_Altimeter(const gz::msgs::Altimeter& msg)
 
 void GzClient::handle_BatteryState(const gz::msgs::BatteryState& msg)
 {
-    TF_Msg frame;
-    frame.type = SYNAPSE_IN_BATTERY_STATE_TOPIC;
-    std::string data;
-
-    synapse::msgs::BatteryState syn_msg;
-    syn_msg.set_voltage(msg.voltage());
-    syn_msg.set_current(msg.current());
-    syn_msg.set_charge(msg.charge());
-    syn_msg.set_capacity(msg.capacity());
-    syn_msg.set_percentage(msg.percentage());
-
+    // construct message
     static std::map<gz::msgs::BatteryState::PowerSupplyStatus, synapse::msgs::BatteryState::PowerSupplyStatus> power_supply_status_map = {
         { gz::msgs::BatteryState_PowerSupplyStatus_UNKNOWN, synapse::msgs::BatteryState_PowerSupplyStatus_UNKNOWN_STATUS },
         { gz::msgs::BatteryState_PowerSupplyStatus_CHARGING, synapse::msgs::BatteryState_PowerSupplyStatus_CHARGING },
@@ -204,13 +214,24 @@ void GzClient::handle_BatteryState(const gz::msgs::BatteryState& msg)
         { gz::msgs::BatteryState_PowerSupplyStatus_NOT_CHARGING, synapse::msgs::BatteryState_PowerSupplyStatus_NOT_CHARGING },
         { gz::msgs::BatteryState_PowerSupplyStatus_FULL, synapse::msgs::BatteryState_PowerSupplyStatus_FULL }
     };
-
+    synapse::msgs::BatteryState syn_msg;
+    syn_msg.set_voltage(msg.voltage());
+    syn_msg.set_current(msg.current());
+    syn_msg.set_charge(msg.charge());
+    syn_msg.set_capacity(msg.capacity());
+    syn_msg.set_percentage(msg.percentage());
     syn_msg.set_power_supply_status(power_supply_status_map[msg.power_supply_status()]);
 
+    // serialize message
+    std::string data;
     if (!syn_msg.SerializeToString(&data)) {
         std::cerr << "Failed to serialize BatteryState" << std::endl;
         return;
     }
+
+    // send message
+    TF_Msg frame;
+    frame.type = SYNAPSE_IN_BATTERY_STATE_TOPIC;
     frame.len = data.length();
     frame.data = (const uint8_t*)data.c_str();
     tf_send(frame);
