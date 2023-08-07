@@ -21,6 +21,7 @@ private:
     std::string topic_sub_navsat_;
     std::string topic_pub_actuators_;
     std::string topic_sub_battery_state_;
+    std::string topic_sub_wheel_odometry_;
     std::shared_ptr<TinyFrame> tf_;
 
 public:
@@ -34,6 +35,7 @@ public:
     void handle_NavSat(const gz::msgs::NavSat& msg);
     void handle_Altimeter(const gz::msgs::Altimeter& msg);
     void handle_BatteryState(const gz::msgs::BatteryState& msg);
+    void handle_WheelOdometry(const gz::msgs::Model& msg);
 };
 
 // vi: ts=4 sw=4 et

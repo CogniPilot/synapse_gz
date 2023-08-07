@@ -11,6 +11,7 @@
 #include <synapse_protobuf/magnetic_field.pb.h>
 #include <synapse_protobuf/nav_sat_fix.pb.h>
 #include <synapse_protobuf/sim_clock.pb.h>
+#include <synapse_protobuf/wheel_odometry.pb.h>
 #include <synapse_tinyframe/SynapseTopics.h>
 
 GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
@@ -26,6 +27,7 @@ GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
     topic_sub_imu_ = sensor_prefix + "/imu_sensor/imu";
     topic_sub_magnetometer_ = sensor_prefix + "/mag_sensor/magnetometer";
     topic_sub_navsat_ = sensor_prefix + "/navsat_sensor/navsat";
+    topic_sub_wheel_odometry_ = world_prefix + "/joint_state";
 
     // actuators
     topic_pub_actuators_ = "/actuators";
@@ -66,6 +68,13 @@ GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
         boost::bind(&GzClient::handle_NavSat, this, boost::placeholders::_1));
     if (!Subscribe<gz::msgs::NavSat>(topic_sub_navsat_, cb_navsat)) {
         throw std::runtime_error("Error subscribing to topic " + topic_sub_navsat_);
+    }
+
+    // wheel_odometry sub
+    boost::function<void(const gz::msgs::Model&)> cb_wheel_odometry(
+        boost::bind(&GzClient::handle_WheelOdometry, this, boost::placeholders::_1));
+    if (!Subscribe<gz::msgs::Model>(topic_sub_wheel_odometry_, cb_wheel_odometry)) {
+        throw std::runtime_error("Error subscribing to wheel odometry " + topic_sub_wheel_odometry_);
     }
 
     // battery sub
@@ -232,6 +241,27 @@ void GzClient::handle_BatteryState(const gz::msgs::BatteryState& msg)
     // send message
     TF_Msg frame;
     frame.type = SYNAPSE_IN_BATTERY_STATE_TOPIC;
+    frame.len = data.length();
+    frame.data = (const uint8_t*)data.c_str();
+    tf_send(frame);
+}
+
+void GzClient::handle_WheelOdometry(const gz::msgs::Model& msg)
+{
+    // construct message
+    synapse::msgs::WheelOdometry syn_msg;
+    syn_msg.set_rotation(msg.joint(0).axis1().position());
+
+    // serialize message
+    std::string data;
+    if (!syn_msg.SerializeToString(&data)) {
+        std::cerr << "Failed to serialize WheelOdometry" << std::endl;
+        return;
+    }
+
+    // send message
+    TF_Msg frame;
+    frame.type = SYNAPSE_IN_WHEEL_ODOMETRY_TOPIC;
     frame.len = data.length();
     frame.data = (const uint8_t*)data.c_str();
     tf_send(frame);
