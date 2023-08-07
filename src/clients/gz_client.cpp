@@ -250,7 +250,15 @@ void GzClient::handle_WheelOdometry(const gz::msgs::Model& msg)
 {
     // construct message
     synapse::msgs::WheelOdometry syn_msg;
-    syn_msg.set_rotation(msg.joint(0).axis1().position());
+    // assume differential so average all wheels for odom
+    // where odom is mounted on motor
+    int n_wheels = msg.joint_size();
+    double rotation = 0;
+    for (int i=0; i<n_wheels; i++) {
+        rotation += msg.joint(i).axis1().position();
+    }
+    rotation /= n_wheels;
+    syn_msg.set_rotation(rotation);
 
     // serialize message
     std::string data;
