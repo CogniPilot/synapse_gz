@@ -21,29 +21,23 @@ void signal_handler(int signum)
 
 void ros_entry_point()
 {
-    std::cout << "ros thread started" << std::endl;
     while (not g_stop) {
         g_tcp_client->run_for(std::chrono::seconds(1));
     }
-    std::cout << "ros thread stopped" << std::endl;
 }
 
 void tcp_entry_point()
 {
-    std::cout << "tcp thread started" << std::endl;
     while (not g_stop) {
         g_tcp_client->run_for(std::chrono::seconds(1));
     }
-    std::cout << "tcp thread stopped" << std::endl;
 }
 
 void gz_entry_point()
 {
-    std::cout << "gz thread started" << std::endl;
     while (not g_stop) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
-    std::cout << "gz thread stopped" << std::endl;
 }
 
 class SynapseGz : public rclcpp::Node {

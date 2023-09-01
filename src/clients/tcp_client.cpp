@@ -48,7 +48,6 @@ void TcpClient::handle_connect(
 {
     if (ec.failed()) {
         connected_ = false;
-        std::cerr << "failed to connect: " << ec.message() << std::endl;
         if (sockfd_.is_open()) {
             sockfd_.close();
         }
@@ -64,7 +63,6 @@ void TcpClient::tick(const boost::system::error_code& /*e*/)
         sockfd_.async_receive(boost::asio::buffer(rx_buf_, rx_buf_length_),
             std::bind(&TcpClient::rx_handler, this, _1, _2));
     } else {
-        std::cout << "tcp connecting to: " << host_ << ":" << port_ << std::endl;
         boost::asio::async_connect(
             sockfd_,
             resolver_.resolve(host_, std::to_string(port_)),
@@ -72,12 +70,7 @@ void TcpClient::tick(const boost::system::error_code& /*e*/)
     }
 
     boost::posix_time::time_duration wait;
-    if (connected_) {
-        wait = boost::posix_time::milliseconds(100);
-    } else {
-        wait = boost::posix_time::seconds(5);
-    }
-
+    wait = boost::posix_time::milliseconds(100);
     timer_.expires_at(timer_.expires_at() + wait);
     timer_.async_wait(std::bind(&TcpClient::tick, this, _1));
 }
