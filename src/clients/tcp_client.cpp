@@ -31,6 +31,48 @@ TcpClient::TcpClient(std::string host, int port, const std::shared_ptr<TinyFrame
     : host_(host)
     , port_(port)
 {
+    // Set socket options
+    sockfd_.open(boost::asio::ip::tcp::v4());
+    if (!sockfd_.is_open()) {
+        std::cerr << "failed to open socket" << std::endl;
+    }
+
+    try {
+        sockfd_.set_option(boost::asio::detail::socket_option::integer<SOL_SOCKET, SO_REUSEADDR> { 1 });
+    } catch (std::exception& e) {
+        std::cerr << e.what() << "failed to set reuseaddr" << std::endl;
+    }
+
+    try {
+        sockfd_.set_option(boost::asio::detail::socket_option::integer<SOL_SOCKET, SO_KEEPALIVE> { 1 });
+    } catch (std::exception& e) {
+        std::cerr << e.what() << "failed to set keep alive" << std::endl;
+    }
+
+    try {
+        sockfd_.set_option(boost::asio::detail::socket_option::integer<IPPROTO_TCP, TCP_KEEPIDLE> { 1 });
+    } catch (std::exception& e) {
+        std::cerr << e.what() << "failed to set keepidle" << std::endl;
+    }
+
+    try {
+        sockfd_.set_option(boost::asio::detail::socket_option::integer<IPPROTO_TCP, TCP_KEEPCNT> { 3 });
+    } catch (std::exception& e) {
+        std::cerr << e.what() << "failed to set keepcnt" << std::endl;
+    }
+
+    try {
+        sockfd_.set_option(boost::asio::detail::socket_option::integer<IPPROTO_TCP, TCP_KEEPINTVL> { 1 });
+    } catch (std::exception& e) {
+        std::cerr << e.what() << "failed to set keepintvl" << std::endl;
+    }
+
+    try {
+        sockfd_.set_option(boost::asio::detail::socket_option::integer<IPPROTO_TCP, TCP_SYNCNT> { 1 });
+    } catch (std::exception& e) {
+        std::cerr << e.what() << "failed to set user syncnt" << std::endl;
+    }
+
     // Set up the TinyFrame library
     tf_ = tf;
     tf_->usertag = 0;
@@ -98,7 +140,7 @@ void TcpClient::rx_handler(const boost::system::error_code& ec, std::size_t byte
         std::cerr << "reconnecting due to reset" << std::endl;
         connected_ = false;
     } else if (ec != boost::system::errc::success) {
-        std::cerr << "rx error: " << ec.message() << std::endl;
+        // std::cerr << "rx error: " << ec.message() << std::endl;
     } else if (ec == boost::system::errc::success) {
         const std::lock_guard<std::mutex> lock(guard_rx_buf_);
         TF_Accept(tf_.get(), rx_buf_, bytes_transferred);
