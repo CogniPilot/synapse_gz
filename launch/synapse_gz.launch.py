@@ -11,6 +11,8 @@ ARGUMENTS = [
                           description='port for gz sim'),
     DeclareLaunchArgument('port', default_value='4241',
                           description='tcp port for cerebri'),
+    DeclareLaunchArgument('vehicle', default_value='mrbuggy3',
+                          description='vehicle'),
     DeclareLaunchArgument('log_level', default_value='error',
                           choices=['info', 'warn', 'error'],
                           description='log level'),
@@ -25,6 +27,7 @@ def generate_launch_description():
     # Launch configurations
     host = LaunchConfiguration('host')
     port = LaunchConfiguration('port')
+    vehicle = LaunchConfiguration('vehicle')
 
     synapse_gz = Node(
         package='synapse_gz',
@@ -33,6 +36,7 @@ def generate_launch_description():
             'host': LaunchConfiguration('host'),
             'port': LaunchConfiguration('port'),
             'use_sim_time': LaunchConfiguration('use_sim_time'),
+            'vehicle': LaunchConfiguration('vehicle'),
         }],
         arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')],
         output='screen')
