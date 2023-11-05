@@ -11,8 +11,6 @@
 #include <boost/date_time/posix_time/posix_time_config.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <boost/system/error_code.hpp>
-#include <google/protobuf/stubs/logging.h>
-#include <gz/msgs/actuators.pb.h>
 #include <memory>
 
 using std::placeholders::_1;
@@ -27,7 +25,7 @@ static void write_tcp(TinyFrame* tf, const uint8_t* buf, uint32_t len)
     tcp_client->write(buf, len);
 }
 
-TcpClient::TcpClient(std::string host, int port, const std::shared_ptr<TinyFrame>& tf)
+TcpClient::TcpClient(std::string host, int port)
     : host_(host)
     , port_(port)
 {
@@ -74,13 +72,14 @@ TcpClient::TcpClient(std::string host, int port, const std::shared_ptr<TinyFrame
     }
 
     // Set up the TinyFrame library
-    tf_ = tf;
+    tf_ = std::make_shared<TinyFrame>(*TF_Init(TF_MASTER, write_tcp));
     tf_->usertag = 0;
     tf_->userdata = this;
     tf_->write = write_tcp;
-    TF_AddGenericListener(tf_.get(), TcpClient::genericListener);
-    TF_AddTypeListener(tf_.get(), SYNAPSE_OUT_CMD_VEL_TOPIC, TcpClient::out_cmd_vel_Listener);
-    TF_AddTypeListener(tf_.get(), SYNAPSE_OUT_ACTUATORS_TOPIC, TcpClient::actuatorsListener);
+    TF_AddGenericListener(tf_.get(), TcpClient::generic_listener);
+    TF_AddTypeListener(tf_.get(), SYNAPSE_OUT_CMD_VEL_TOPIC, TcpClient::out_cmd_vel_listener);
+    TF_AddTypeListener(tf_.get(), SYNAPSE_OUT_ACTUATORS_TOPIC, TcpClient::actuators_listener);
+    TF_AddTypeListener(tf_.get(), SYNAPSE_OUT_ODOMETRY_TOPIC, TcpClient::odometry_listener);
     timer_.async_wait(std::bind(&TcpClient::tick, this, _1));
 }
 
@@ -140,24 +139,15 @@ void TcpClient::rx_handler(const boost::system::error_code& ec, std::size_t byte
         std::cerr << "reconnecting due to reset" << std::endl;
         connected_ = false;
     } else if (ec != boost::system::errc::success) {
-        // std::cerr << "rx error: " << ec.message() << std::endl;
+        std::cerr << "rx error: " << ec.message() << std::endl;
     } else if (ec == boost::system::errc::success) {
         const std::lock_guard<std::mutex> lock(guard_rx_buf_);
         TF_Accept(tf_.get(), rx_buf_, bytes_transferred);
     }
 }
 
-void my_log_handler(google::protobuf::LogLevel level, const char* filename, int line, const std::string& message)
+TF_Result TcpClient::actuators_listener(TinyFrame* tf, TF_Msg* frame)
 {
-    static const char* level_names[] = { "INFO", "WARNING", "ERROR", "FATAL" };
-    fprintf(stderr, "[libprotobuf %s %s:%d] %s\n",
-        level_names[level], filename, line, message.c_str());
-    fflush(stderr); // Needed on MSVC.
-}
-
-TF_Result TcpClient::actuatorsListener(TinyFrame* tf, TF_Msg* frame)
-{
-    google::protobuf::SetLogHandler(my_log_handler);
     synapse::msgs::Actuators msg;
 
     // get tcp client attached to tf pointer in userdata
@@ -186,27 +176,31 @@ TF_Result TcpClient::actuatorsListener(TinyFrame* tf, TF_Msg* frame)
     return TF_STAY;
 }
 
-TF_Result TcpClient::out_cmd_vel_Listener(TinyFrame* tf, TF_Msg* frame)
+TF_Result TcpClient::out_cmd_vel_listener(TinyFrame* tf, TF_Msg* frame)
 {
     (void)tf;
     synapse::msgs::Twist msg;
     if (!msg.ParseFromArray(frame->data, frame->len)) {
-        std::cerr << "Failed to out_cmd_vel" << std::endl;
+        std::cerr << "Failed to parse out_cmd_vel" << std::endl;
         return TF_STAY;
     } else {
-        std::cout << "out cmd vel"
-                  << msg.linear().x()
-                  << msg.linear().y()
-                  << msg.linear().z()
-                  << msg.angular().x()
-                  << msg.angular().y()
-                  << msg.angular().z()
-                  << std::endl;
     }
     return TF_STAY;
 }
 
-TF_Result TcpClient::genericListener(TinyFrame* tf, TF_Msg* msg)
+TF_Result TcpClient::odometry_listener(TinyFrame* tf, TF_Msg* frame)
+{
+    (void)tf;
+    synapse::msgs::Odometry msg;
+    if (!msg.ParseFromArray(frame->data, frame->len)) {
+        std::cerr << "Failed to parse odometry" << std::endl;
+        return TF_STAY;
+    } else {
+    }
+    return TF_STAY;
+}
+
+TF_Result TcpClient::generic_listener(TinyFrame* tf, TF_Msg* msg)
 {
     (void)tf;
     int type = msg->type;

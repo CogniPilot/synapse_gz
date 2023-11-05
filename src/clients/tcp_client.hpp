@@ -1,5 +1,5 @@
-#ifndef SYNAPSE_GZ_TCP_CLIENT_HPP
-#define SYNAPSE_GZ_TCP_CLIENT_HPP
+#ifndef SYNAPSE_GZ_TCP_CLIENT_HPP__
+#define SYNAPSE_GZ_TCP_CLIENT_HPP__
 
 #include <algorithm>
 #include <boost/asio.hpp>
@@ -20,14 +20,14 @@ private:
     boost::asio::deadline_timer timer_ { io_context_, boost::posix_time::seconds(0) };
     boost::asio::ip::tcp::socket sockfd_ { boost::asio::ip::tcp::socket(io_context_) };
     boost::asio::ip::tcp::resolver resolver_ { io_context_ };
-    std::shared_ptr<TinyFrame> tf_ { TF_Init(TF_MASTER) };
     std::string host_;
     int port_;
     bool connected_ { false };
 
 public:
+    std::shared_ptr<TinyFrame> tf_ {};
     std::shared_ptr<GzClient> gz_ { NULL };
-    TcpClient(std::string host, int port, const std::shared_ptr<TinyFrame>& tf);
+    TcpClient(std::string host, int port);
     void run_for(std::chrono::seconds sec);
     void write(const uint8_t* buf, uint32_t len);
 
@@ -39,11 +39,12 @@ private:
     void tx_handler(const boost::system::error_code& error, std::size_t bytes_transferred);
     void rx_handler(const boost::system::error_code& error, std::size_t bytes_transferred);
     void send_frame(TF_Msg* msg);
-    static TF_Result actuatorsListener(TinyFrame* tf, TF_Msg* frame);
-    static TF_Result out_cmd_vel_Listener(TinyFrame* tf, TF_Msg* frame);
-    static TF_Result genericListener(TinyFrame* tf, TF_Msg* msg);
+    static TF_Result odometry_listener(TinyFrame* tf, TF_Msg* frame);
+    static TF_Result actuators_listener(TinyFrame* tf, TF_Msg* frame);
+    static TF_Result out_cmd_vel_listener(TinyFrame* tf, TF_Msg* frame);
+    static TF_Result generic_listener(TinyFrame* tf, TF_Msg* msg);
 };
 
 // vi: ts=4 sw=4 et
 
-#endif // SYNAPSE_GZ_TCP_CLIENT_HPP
+#endif // SYNAPSE_GZ_TCP_CLIENT_HPP__

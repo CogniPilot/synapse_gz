@@ -53,14 +53,11 @@ public:
         int port = this->get_parameter("port").as_int();
         std::string vehicle = this->get_parameter("vehicle").as_string();
 
-        // create tinyframe
-        g_tf = std::make_shared<TinyFrame>(*(TF_Init(TF_MASTER)));
+        // create tcp client
+        g_tcp_client = std::make_shared<TcpClient>(host, port);
 
         // create gz client
-        g_gz_client = std::make_shared<GzClient>(vehicle, g_tf);
-
-        // create tcp client
-        g_tcp_client = std::make_shared<TcpClient>(host, port, g_tf);
+        g_gz_client = std::make_shared<GzClient>(vehicle, g_tcp_client.get()->tf_);
         g_tcp_client.get()->gz_ = g_gz_client;
 
         // start threads
