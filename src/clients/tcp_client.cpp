@@ -126,7 +126,7 @@ void TcpClient::tx_handler(const boost::system::error_code& ec, std::size_t byte
         std::cerr << "reconnecting due to reset" << std::endl;
         connected_ = false;
     } else if (ec != boost::system::errc::success) {
-        std::cerr << "tx error: " << ec.message() << std::endl;
+        // std::cerr << "tx error: " << ec.message() << std::endl;
     }
 }
 
