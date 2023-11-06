@@ -47,7 +47,7 @@ public:
     {
         this->declare_parameter("host", "127.0.0.1");
         this->declare_parameter("port", 4241);
-        this->declare_parameter("vehicle", "mrbuggy3");
+        this->declare_parameter("vehicle", "b3rb");
 
         std::string host = this->get_parameter("host").as_string();
         int port = this->get_parameter("port").as_int();
