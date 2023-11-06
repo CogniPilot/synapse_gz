@@ -126,7 +126,7 @@ void GzClient::handle_Clock(const gz::msgs::Clock& msg)
 
     // send message
     TF_Msg frame;
-    frame.type = SYNAPSE_IN_SIM_CLOCK_TOPIC;
+    frame.type = SYNAPSE_SIM_CLOCK_TOPIC;
     frame.len = data.length();
     frame.data = (const uint8_t*)data.c_str();
     tf_send(frame);
@@ -149,7 +149,7 @@ void GzClient::handle_Magnetometer(const gz::msgs::Magnetometer& msg)
 
     // send message
     TF_Msg frame;
-    frame.type = SYNAPSE_IN_MAGNETIC_FIELD_TOPIC;
+    frame.type = SYNAPSE_MAGNETIC_FIELD_TOPIC;
     frame.len = data.length();
     frame.data = (const uint8_t*)data.c_str();
     tf_send(frame);
@@ -175,7 +175,7 @@ void GzClient::handle_IMU(const gz::msgs::IMU& msg)
 
     // send message
     TF_Msg frame;
-    frame.type = SYNAPSE_IN_IMU_TOPIC;
+    frame.type = SYNAPSE_IMU_TOPIC;
     frame.len = data.length();
     frame.data = (const uint8_t*)data.c_str();
     tf_send(frame);
@@ -203,7 +203,7 @@ void GzClient::handle_NavSat(const gz::msgs::NavSat& msg)
 
     // send message
     TF_Msg frame;
-    frame.type = SYNAPSE_IN_NAV_SAT_FIX_TOPIC;
+    frame.type = SYNAPSE_NAV_SAT_FIX_TOPIC;
     frame.len = data.length();
     frame.data = (const uint8_t*)data.c_str();
     tf_send(frame);
@@ -223,7 +223,7 @@ void GzClient::handle_Altimeter(const gz::msgs::Altimeter& msg)
 
     // send message
     TF_Msg frame;
-    frame.type = SYNAPSE_IN_ALTIMETER_TOPIC;
+    frame.type = SYNAPSE_ALTIMETER_TOPIC;
     frame.len = data.length();
     frame.data = (const uint8_t*)data.c_str();
     tf_send(frame);
@@ -256,7 +256,7 @@ void GzClient::handle_BatteryState(const gz::msgs::BatteryState& msg)
 
     // send message
     TF_Msg frame;
-    frame.type = SYNAPSE_IN_BATTERY_STATE_TOPIC;
+    frame.type = SYNAPSE_BATTERY_STATE_TOPIC;
     frame.len = data.length();
     frame.data = (const uint8_t*)data.c_str();
     tf_send(frame);
@@ -285,7 +285,7 @@ void GzClient::handle_WheelOdometry(const gz::msgs::Model& msg)
 
     // send message
     TF_Msg frame;
-    frame.type = SYNAPSE_IN_WHEEL_ODOMETRY_TOPIC;
+    frame.type = SYNAPSE_WHEEL_ODOMETRY_TOPIC;
     frame.len = data.length();
     frame.data = (const uint8_t*)data.c_str();
     tf_send(frame);
