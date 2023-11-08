@@ -139,7 +139,7 @@ void TcpClient::rx_handler(const boost::system::error_code& ec, std::size_t byte
         std::cerr << "reconnecting due to reset" << std::endl;
         connected_ = false;
     } else if (ec != boost::system::errc::success) {
-        //std::cerr << "rx error: " << ec.message() << std::endl;
+        // std::cerr << "rx error: " << ec.message() << std::endl;
     } else if (ec == boost::system::errc::success) {
         const std::lock_guard<std::mutex> lock(guard_rx_buf_);
         TF_Accept(tf_.get(), rx_buf_, bytes_transferred);

@@ -41,7 +41,7 @@ GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
     if (!Subscribe<gz::msgs::Clock>(topic_sub_clock_, f_clock)) {
         throw std::runtime_error("Error subscribing to topic " + topic_sub_clock_);
     } else {
-        std::cout << "subscribed to " <<  topic_sub_clock_ << std::endl;
+        std::cout << "subscribed to " << topic_sub_clock_ << std::endl;
     }
 
     // altimeter sub
@@ -50,7 +50,7 @@ GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
     if (!Subscribe<gz::msgs::Altimeter>(topic_sub_altimeter_, f_altimeter)) {
         throw std::runtime_error("Error subscribing to topic " + topic_sub_altimeter_);
     } else {
-        std::cout << "subscribed to " <<  topic_sub_altimeter_ << std::endl;
+        std::cout << "subscribed to " << topic_sub_altimeter_ << std::endl;
     }
 
     // imu sub
@@ -59,7 +59,7 @@ GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
     if (!Subscribe<gz::msgs::IMU>(topic_sub_imu_, f_IMU)) {
         throw std::runtime_error("Error subscribing to topic " + topic_sub_imu_);
     } else {
-        std::cout << "subscribed to " <<  topic_sub_imu_ << std::endl;
+        std::cout << "subscribed to " << topic_sub_imu_ << std::endl;
     }
 
     // magnetometer sub
@@ -68,7 +68,7 @@ GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
     if (!Subscribe<gz::msgs::Magnetometer>(topic_sub_magnetometer_, cb_mag)) {
         throw std::runtime_error("Error subscribing to topic " + topic_sub_magnetometer_);
     } else {
-        std::cout << "subscribed to " <<  topic_sub_magnetometer_ << std::endl;
+        std::cout << "subscribed to " << topic_sub_magnetometer_ << std::endl;
     }
 
     // navsat sub
@@ -77,7 +77,7 @@ GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
     if (!Subscribe<gz::msgs::NavSat>(topic_sub_navsat_, cb_navsat)) {
         throw std::runtime_error("Error subscribing to topic " + topic_sub_navsat_);
     } else {
-        std::cout << "subscribed to " <<  topic_sub_navsat_ << std::endl;
+        std::cout << "subscribed to " << topic_sub_navsat_ << std::endl;
     }
 
     // wheel_odometry sub
@@ -86,7 +86,7 @@ GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
     if (!Subscribe<gz::msgs::Model>(topic_sub_wheel_odometry_, cb_wheel_odometry)) {
         throw std::runtime_error("Error subscribing to wheel odometry " + topic_sub_wheel_odometry_);
     } else {
-        std::cout << "subscribed to " <<  topic_sub_wheel_odometry_ << std::endl;
+        std::cout << "subscribed to " << topic_sub_wheel_odometry_ << std::endl;
     }
 
     // battery sub
@@ -95,7 +95,7 @@ GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
     if (!Subscribe<gz::msgs::BatteryState>(topic_sub_battery_state_, cb_battery_state)) {
         throw std::runtime_error("Error subscribing to topic " + topic_sub_battery_state_);
     } else {
-        std::cout << "subscribed to " <<  topic_sub_battery_state_ << std::endl;
+        std::cout << "subscribed to " << topic_sub_battery_state_ << std::endl;
     }
 
     // actuators pub
@@ -103,7 +103,7 @@ GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
     if (!pub_actuators_) {
         throw std::runtime_error("Error advertising topic " + topic_pub_actuators_);
     } else {
-        std::cout << "publishing to " <<  topic_pub_actuators_ << std::endl;
+        std::cout << "publishing to " << topic_pub_actuators_ << std::endl;
     }
 }
 
@@ -270,7 +270,7 @@ void GzClient::handle_WheelOdometry(const gz::msgs::Model& msg)
     // where odom is mounted on motor
     int n_wheels = msg.joint_size();
     double rotation = 0;
-    for (int i=0; i<n_wheels; i++) {
+    for (int i = 0; i < n_wheels; i++) {
         rotation += msg.joint(i).axis1().position();
     }
     rotation /= n_wheels;
