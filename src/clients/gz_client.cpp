@@ -217,7 +217,7 @@ void GzClient::handle_Altimeter(const gz::msgs::Altimeter& msg)
     // serialize message
     std::string data;
     if (!msg.SerializeToString(&data)) {
-        std::cerr << "Failed to serialize IMU" << std::endl;
+        std::cerr << "Failed to serialize Altimeter" << std::endl;
         return;
     }
 
