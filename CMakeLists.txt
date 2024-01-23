@@ -13,7 +13,7 @@ find_package(rclcpp REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(synapse_protobuf REQUIRED)
 find_package(synapse_tinyframe REQUIRED)
-find_package(gz-transport12 REQUIRED)
+find_package(gz-transport13 REQUIRED)
 find_package(Boost COMPONENTS system REQUIRED)
 
 add_executable(${PROJECT_NAME}
@@ -21,7 +21,7 @@ add_executable(${PROJECT_NAME}
   src/clients/gz_client.cpp
   src/clients/tcp_client.cpp
 )
-ament_target_dependencies(${PROJECT_NAME} synapse_tinyframe synapse_protobuf gz-transport12 Boost rclcpp)
+ament_target_dependencies(${PROJECT_NAME} synapse_tinyframe synapse_protobuf gz-transport13 Boost rclcpp)
 target_include_directories(${PROJECT_NAME} PRIVATE src/clients)
 
 #==========================================================
