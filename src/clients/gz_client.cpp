@@ -3,13 +3,11 @@
 #include <boost/bind/bind.hpp>
 #include <boost/function.hpp>
 
-#include <gz/msgs/details/battery.pb.h>
-#include <gz/msgs/details/battery_state.pb.h>
-#include <gz/msgs/details/magnetometer.pb.h>
 #include <synapse_protobuf/battery_state.pb.h>
 #include <synapse_protobuf/imu.pb.h>
 #include <synapse_protobuf/magnetic_field.pb.h>
 #include <synapse_protobuf/nav_sat_fix.pb.h>
+#include <synapse_protobuf/odometry.pb.h>
 #include <synapse_protobuf/sim_clock.pb.h>
 #include <synapse_protobuf/wheel_odometry.pb.h>
 #include <synapse_tinyframe/SynapseTopics.h>
@@ -28,6 +26,7 @@ GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
     topic_sub_magnetometer_ = sensor_prefix + "/mag_sensor/magnetometer";
     topic_sub_navsat_ = sensor_prefix + "/navsat_sensor/navsat";
     topic_sub_wheel_odometry_ = world_prefix + "/joint_state";
+    topic_sub_odometry_ = model_prefix + "/odometry";
 
     // actuators
     topic_pub_actuators_ = "/actuators";
@@ -87,6 +86,15 @@ GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
         throw std::runtime_error("Error subscribing to wheel odometry " + topic_sub_wheel_odometry_);
     } else {
         std::cout << "subscribed to " << topic_sub_wheel_odometry_ << std::endl;
+    }
+
+    // odometry sub
+    boost::function<void(const gz::msgs::Odometry&)> cb_odometry(
+        boost::bind(&GzClient::handle_Odometry, this, boost::placeholders::_1));
+    if (!Subscribe<gz::msgs::Odometry>(topic_sub_odometry_, cb_odometry)) {
+        throw std::runtime_error("Error subscribing to wheel odometry " + topic_sub_odometry_);
+    } else {
+        std::cout << "subscribed to " << topic_sub_odometry_ << std::endl;
     }
 
     // battery sub
@@ -286,6 +294,69 @@ void GzClient::handle_WheelOdometry(const gz::msgs::Model& msg)
     // send message
     TF_Msg frame;
     frame.type = SYNAPSE_WHEEL_ODOMETRY_TOPIC;
+    frame.len = data.length();
+    frame.data = (const uint8_t*)data.c_str();
+    tf_send(frame);
+}
+
+void GzClient::handle_Odometry(const gz::msgs::Odometry& msg)
+{
+    // construct message
+    synapse::msgs::Odometry syn_msg;
+
+    if (msg.has_header()) {
+        for (auto map = msg.header().data().begin(); map < msg.header().data().end(); map++) {
+            if (map->key() == "frame_id") {
+                syn_msg.mutable_header()->set_frame_id(map->value(0));
+            } else if (map->key() == "child_frame_id") {
+                syn_msg.set_child_frame_id(map->value(0));
+            }
+        }
+        if (msg.header().has_stamp()) {
+            syn_msg.mutable_header()->mutable_stamp()->set_sec(
+                msg.header().stamp().sec());
+            syn_msg.mutable_header()->mutable_stamp()->set_nanosec(
+                msg.header().stamp().nsec());
+        }
+    }
+
+    if (msg.has_pose()) {
+        if (msg.pose().has_position()) {
+            syn_msg.mutable_pose()->mutable_pose()->mutable_position()->set_x(msg.pose().position().x());
+            syn_msg.mutable_pose()->mutable_pose()->mutable_position()->set_y(msg.pose().position().y());
+            syn_msg.mutable_pose()->mutable_pose()->mutable_position()->set_z(msg.pose().position().z());
+        }
+        if (msg.pose().has_orientation()) {
+            syn_msg.mutable_pose()->mutable_pose()->mutable_orientation()->set_x(msg.pose().orientation().x());
+            syn_msg.mutable_pose()->mutable_pose()->mutable_orientation()->set_y(msg.pose().orientation().y());
+            syn_msg.mutable_pose()->mutable_pose()->mutable_orientation()->set_z(msg.pose().orientation().z());
+            syn_msg.mutable_pose()->mutable_pose()->mutable_orientation()->set_w(msg.pose().orientation().w());
+        }
+    }
+
+    if (msg.has_twist()) {
+        if (msg.twist().has_linear()) {
+            syn_msg.mutable_twist()->mutable_twist()->mutable_linear()->set_x(msg.twist().linear().x());
+            syn_msg.mutable_twist()->mutable_twist()->mutable_linear()->set_y(msg.twist().linear().y());
+            syn_msg.mutable_twist()->mutable_twist()->mutable_linear()->set_z(msg.twist().linear().z());
+        }
+        if (msg.twist().has_angular()) {
+            syn_msg.mutable_twist()->mutable_twist()->mutable_angular()->set_x(msg.twist().angular().x());
+            syn_msg.mutable_twist()->mutable_twist()->mutable_angular()->set_y(msg.twist().angular().y());
+            syn_msg.mutable_twist()->mutable_twist()->mutable_angular()->set_z(msg.twist().angular().z());
+        }
+    }
+
+    // serialize message
+    std::string data;
+    if (!syn_msg.SerializeToString(&data)) {
+        std::cerr << "Failed to serialize Odometry" << std::endl;
+        return;
+    }
+
+    // send message
+    TF_Msg frame;
+    frame.type = SYNAPSE_ODOMETRY_TOPIC;
     frame.len = data.length();
     frame.data = (const uint8_t*)data.c_str();
     tf_send(frame);
