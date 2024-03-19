@@ -1,13 +1,11 @@
 #ifndef SYNAPSE_GZ_TCP_CLIENT_HPP__
 #define SYNAPSE_GZ_TCP_CLIENT_HPP__
 
-#include <algorithm>
 #include <boost/asio.hpp>
 #include <boost/asio/deadline_timer.hpp>
 #include <boost/asio/signal_set.hpp>
 
 #include "synapse_tinyframe/TinyFrame.h"
-#include "synapse_tinyframe/utils.h"
 
 class GzClient;
 
@@ -42,6 +40,7 @@ private:
     static TF_Result odometry_listener(TinyFrame* tf, TF_Msg* frame);
     static TF_Result actuators_listener(TinyFrame* tf, TF_Msg* frame);
     static TF_Result out_cmd_vel_listener(TinyFrame* tf, TF_Msg* frame);
+    static TF_Result led_array_listener(TinyFrame* tf, TF_Msg* frame);
     static TF_Result generic_listener(TinyFrame* tf, TF_Msg* msg);
 };
 

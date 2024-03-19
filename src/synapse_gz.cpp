@@ -4,7 +4,6 @@
 #include "clients/tcp_client.hpp"
 #include "synapse_tinyframe/TinyFrame.h"
 
-#include <iostream>
 #include <memory>
 #include <rclcpp/parameter_value.hpp>
 

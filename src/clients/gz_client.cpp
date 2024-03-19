@@ -3,6 +3,7 @@
 #include <boost/bind/bind.hpp>
 #include <boost/function.hpp>
 
+#include <gz/msgs/details/material_color.pb.h>
 #include <synapse_protobuf/battery_state.pb.h>
 #include <synapse_protobuf/imu.pb.h>
 #include <synapse_protobuf/magnetic_field.pb.h>
@@ -16,8 +17,8 @@ GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
     : tf_(tf)
 {
     std::string model_prefix = "/model/" + vehicle;
-    std::string world_prefix = "/world/default" + model_prefix;
-    std::string sensor_prefix = world_prefix + "/link/sensors/sensor";
+    std::string world_prefix = "/world/default";
+    std::string sensor_prefix = world_prefix + model_prefix + "/link/sensors/sensor";
     topic_sub_clock_ = "/clock";
 
     // sensors
@@ -25,11 +26,13 @@ GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
     topic_sub_imu_ = sensor_prefix + "/imu_sensor/imu";
     topic_sub_magnetometer_ = sensor_prefix + "/mag_sensor/magnetometer";
     topic_sub_navsat_ = sensor_prefix + "/navsat_sensor/navsat";
-    topic_sub_wheel_odometry_ = world_prefix + "/joint_state";
+    topic_sub_wheel_odometry_ = world_prefix + model_prefix + "/joint_state";
     topic_sub_odometry_ = model_prefix + "/odometry";
 
     // actuators
     topic_pub_actuators_ = "/actuators";
+    topic_pub_lighting_config_ = world_prefix + "/light_config";
+    topic_pub_material_color_ = world_prefix + "/material_color";
 
     // model prefix
     topic_sub_battery_state_ = model_prefix + "/battery/linear_battery/state";
@@ -112,6 +115,22 @@ GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
         throw std::runtime_error("Error advertising topic " + topic_pub_actuators_);
     } else {
         std::cout << "publishing to " << topic_pub_actuators_ << std::endl;
+    }
+
+    // lighting config pub
+    pub_lighting_config_ = Advertise<gz::msgs::Light>(topic_pub_lighting_config_);
+    if (!pub_actuators_) {
+        throw std::runtime_error("Error advertising topic " + topic_pub_lighting_config_);
+    } else {
+        std::cout << "publishing to " << topic_pub_lighting_config_ << std::endl;
+    }
+
+    // material color pub
+    pub_material_color_ = Advertise<gz::msgs::MaterialColor>(topic_pub_material_color_);
+    if (!pub_actuators_) {
+        throw std::runtime_error("Error advertising topic " + topic_pub_material_color_);
+    } else {
+        std::cout << "publishing to " << topic_pub_material_color_ << std::endl;
     }
 }
 
