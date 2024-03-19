@@ -20,6 +20,8 @@ private:
     std::string topic_sub_magnetometer_;
     std::string topic_sub_navsat_;
     std::string topic_pub_actuators_;
+    std::string topic_pub_lighting_config_;
+    std::string topic_pub_material_color_;
     std::string topic_sub_battery_state_;
     std::string topic_sub_wheel_odometry_;
     std::string topic_sub_odometry_;
@@ -28,6 +30,8 @@ private:
 public:
     TcpClient* tcp_client_;
     gz::transport::Node::Publisher pub_actuators_;
+    gz::transport::Node::Publisher pub_lighting_config_;
+    gz::transport::Node::Publisher pub_material_color_;
     GzClient(std::string prefix, std::shared_ptr<TinyFrame> const& tf);
     void tf_send(TF_Msg& frame);
     void handle_Clock(const gz::msgs::Clock& msg);
