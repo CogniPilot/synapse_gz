@@ -205,6 +205,7 @@ void GzClient::handle_IMU(const gz::msgs::IMU& msg)
     frame.type = SYNAPSE_IMU_TOPIC;
     frame.len = data.length();
     frame.data = (const uint8_t*)data.c_str();
+
     tf_send(frame);
 }
 

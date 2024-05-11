@@ -10,7 +10,7 @@
 
 #include "synapse_tinyframe/TinyFrame.h"
 
-class TcpClient;
+class UdpClient;
 
 class GzClient : public gz::transport::Node {
 private:
@@ -28,7 +28,7 @@ private:
     std::shared_ptr<TinyFrame> tf_;
 
 public:
-    TcpClient* tcp_client_;
+    UdpClient* udp_client_;
     gz::transport::Node::Publisher pub_actuators_;
     gz::transport::Node::Publisher pub_lighting_config_;
     gz::transport::Node::Publisher pub_material_color_;

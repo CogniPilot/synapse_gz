@@ -9,8 +9,8 @@ from launch_ros.actions import Node
 ARGUMENTS = [
     DeclareLaunchArgument('host', default_value='127.0.0.1',
                           description='port for gz sim'),
-    DeclareLaunchArgument('port', default_value='4241',
-                          description='tcp port for cerebri'),
+    DeclareLaunchArgument('port', default_value='4243',
+                          description='port for cerebri'),
     DeclareLaunchArgument('vehicle', default_value='b3rb',
                           description='vehicle'),
     DeclareLaunchArgument('log_level', default_value='error',

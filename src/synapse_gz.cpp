@@ -1,14 +1,14 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "clients/gz_client.hpp"
-#include "clients/tcp_client.hpp"
+#include "proto/udp_link.hpp"
 #include "synapse_tinyframe/TinyFrame.h"
 
 #include <memory>
 #include <rclcpp/parameter_value.hpp>
 
 std::atomic<bool> g_stop { false };
-std::shared_ptr<TcpClient> g_tcp_client = NULL;
+std::shared_ptr<UDPLink> g_udp_link = NULL;
 std::shared_ptr<GzClient> g_gz_client = NULL;
 std::shared_ptr<TinyFrame> g_tf = NULL;
 
@@ -21,14 +21,14 @@ void signal_handler(int signum)
 void ros_entry_point()
 {
     while (not g_stop) {
-        g_tcp_client->run_for(std::chrono::seconds(1));
+        g_udp_link->run_for(std::chrono::seconds(1));
     }
 }
 
-void tcp_entry_point()
+void udp_link_entry_point()
 {
     while (not g_stop) {
-        g_tcp_client->run_for(std::chrono::seconds(1));
+        g_udp_link->run_for(std::chrono::seconds(1));
     }
 }
 
@@ -52,27 +52,27 @@ public:
         int port = this->get_parameter("port").as_int();
         std::string vehicle = this->get_parameter("vehicle").as_string();
 
-        // create tcp client
-        g_tcp_client = std::make_shared<TcpClient>(host, port);
+        // create udp link
+        g_udp_link = std::make_shared<UDPLink>(host, port);
 
         // create gz client
-        g_gz_client = std::make_shared<GzClient>(vehicle, g_tcp_client.get()->tf_);
-        g_tcp_client.get()->gz_ = g_gz_client;
+        g_gz_client = std::make_shared<GzClient>(vehicle, g_udp_link.get()->tf_);
+        g_udp_link.get()->gz_ = g_gz_client;
 
         // start threads
-        tcp_thread_ = std::make_shared<std::thread>(tcp_entry_point);
+        udp_link_thread_ = std::make_shared<std::thread>(udp_link_entry_point);
         gz_thread_ = std::make_shared<std::thread>(gz_entry_point);
     }
     virtual ~SynapseGz()
     {
         // join threads
         g_stop = true;
-        tcp_thread_->join();
+        udp_link_thread_->join();
         gz_thread_->join();
     }
 
 private:
-    std::shared_ptr<std::thread> tcp_thread_;
+    std::shared_ptr<std::thread> udp_link_thread_;
     std::shared_ptr<std::thread> gz_thread_;
 };
 
