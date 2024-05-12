@@ -28,7 +28,8 @@ private:
 
 public:
     std::shared_ptr<TinyFrame> tf_ {};
-    std::shared_ptr<GzClient> gz_ {}; UDPLink(std::string host, int port);
+    std::shared_ptr<GzClient> gz_ {};
+    UDPLink(std::string host, int port);
     void run_for(std::chrono::seconds sec);
     void write(const uint8_t* buf, uint32_t len);
 

@@ -3,6 +3,7 @@
 #include <boost/bind/bind.hpp>
 #include <boost/function.hpp>
 
+#include <gz/msgs/details/logical_camera_image.pb.h>
 #include <gz/msgs/details/material_color.pb.h>
 #include <synapse_protobuf/battery_state.pb.h>
 #include <synapse_protobuf/imu.pb.h>
@@ -16,9 +17,11 @@
 GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
     : tf_(tf)
 {
-    std::string model_prefix = "/model/" + vehicle;
+    imu_audio_attack_ = true;
+    vehicle_ = vehicle;
+    model_prefix_ = "/model/" + vehicle;
     std::string world_prefix = "/world/default";
-    std::string sensor_prefix = world_prefix + model_prefix + "/link/sensors/sensor";
+    std::string sensor_prefix = world_prefix + model_prefix_ + "/link/sensors/sensor";
     topic_sub_clock_ = "/clock";
 
     // sensors
@@ -26,8 +29,9 @@ GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
     topic_sub_imu_ = sensor_prefix + "/imu_sensor/imu";
     topic_sub_magnetometer_ = sensor_prefix + "/mag_sensor/magnetometer";
     topic_sub_navsat_ = sensor_prefix + "/navsat_sensor/navsat";
-    topic_sub_wheel_odometry_ = world_prefix + model_prefix + "/joint_state";
-    topic_sub_odometry_ = model_prefix + "/odometry";
+    topic_sub_wheel_odometry_ = world_prefix + model_prefix_ + "/joint_state";
+    topic_sub_odometry_ = model_prefix_ + "/odometry";
+    topic_sub_logical_camera_ = "/audio_source";
 
     // actuators
     topic_pub_actuators_ = "/actuators";
@@ -35,7 +39,7 @@ GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
     topic_pub_material_color_ = world_prefix + "/material_color";
 
     // model prefix
-    topic_sub_battery_state_ = model_prefix + "/battery/linear_battery/state";
+    topic_sub_battery_state_ = model_prefix_ + "/battery/linear_battery/state";
 
     // clock sub
     boost::function<void(const gz::msgs::Clock&)> f_clock(
@@ -107,6 +111,15 @@ GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
         throw std::runtime_error("Error subscribing to topic " + topic_sub_battery_state_);
     } else {
         std::cout << "subscribed to " << topic_sub_battery_state_ << std::endl;
+    }
+
+    // logical camera sub
+    boost::function<void(const gz::msgs::LogicalCameraImage&)> cb_logical_camera(
+        boost::bind(&GzClient::handle_LogicalCamera, this, boost::placeholders::_1));
+    if (!Subscribe<gz::msgs::LogicalCameraImage>(topic_sub_logical_camera_, cb_logical_camera)) {
+        throw std::runtime_error("Error subscribing to topic " + topic_sub_logical_camera_);
+    } else {
+        std::cout << "subscribed to " << topic_sub_logical_camera_ << std::endl;
     }
 
     // actuators pub
@@ -184,12 +197,29 @@ void GzClient::handle_Magnetometer(const gz::msgs::Magnetometer& msg)
 
 void GzClient::handle_IMU(const gz::msgs::IMU& msg)
 {
+    int64_t sec = msg.header().stamp().sec();
+    int64_t nsec = msg.header().stamp().nsec();
+    double t = sec + nsec * 1e-9;
+    double A = 80 * M_PI / 180.0;
+    double attack = 0;
+    double f = 1.5;
+    if (imu_audio_attack_) {
+        // printf("imu attack!\n");
+        if (sin(2 * M_PI * f * t) > 0) {
+            attack = A;
+        } else {
+            attack = -A;
+        }
+    } else {
+        // printf("no imu attack!\n");
+    }
+
     // construct message
     synapse::msgs::Imu syn_msg;
     syn_msg.mutable_linear_acceleration()->set_x(msg.linear_acceleration().x());
     syn_msg.mutable_linear_acceleration()->set_y(msg.linear_acceleration().y());
     syn_msg.mutable_linear_acceleration()->set_z(msg.linear_acceleration().z());
-    syn_msg.mutable_angular_velocity()->set_x(msg.angular_velocity().x());
+    syn_msg.mutable_angular_velocity()->set_x(msg.angular_velocity().x() + attack);
     syn_msg.mutable_angular_velocity()->set_y(msg.angular_velocity().y());
     syn_msg.mutable_angular_velocity()->set_z(msg.angular_velocity().z());
 
@@ -288,6 +318,17 @@ void GzClient::handle_BatteryState(const gz::msgs::BatteryState& msg)
     frame.len = data.length();
     frame.data = (const uint8_t*)data.c_str();
     tf_send(frame);
+}
+
+void GzClient::handle_LogicalCamera(const gz::msgs::LogicalCameraImage& msg)
+{
+    bool detected = false;
+    for (int i = 0; i < msg.model_size(); i++) {
+        if (msg.model(i).name() == vehicle_) {
+            detected = true;
+        }
+    }
+    imu_audio_attack_ = detected;
 }
 
 void GzClient::handle_WheelOdometry(const gz::msgs::Model& msg)

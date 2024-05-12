@@ -1,6 +1,7 @@
 #ifndef GZ_CLIENT_HPP
 #define GZ_CLIENT_HPP
 
+#include <gz/msgs/details/logical_camera_image.pb.h>
 #include <gz/transport/Publisher.hh>
 #include <memory>
 #include <string>
@@ -14,6 +15,9 @@ class UdpClient;
 
 class GzClient : public gz::transport::Node {
 private:
+    bool imu_audio_attack_;
+    std::string vehicle_;
+    std::string model_prefix_;
     std::string topic_sub_clock_;
     std::string topic_sub_altimeter_;
     std::string topic_sub_imu_;
@@ -25,6 +29,7 @@ private:
     std::string topic_sub_battery_state_;
     std::string topic_sub_wheel_odometry_;
     std::string topic_sub_odometry_;
+    std::string topic_sub_logical_camera_;
     std::shared_ptr<TinyFrame> tf_;
 
 public:
@@ -42,6 +47,7 @@ public:
     void handle_BatteryState(const gz::msgs::BatteryState& msg);
     void handle_WheelOdometry(const gz::msgs::Model& msg);
     void handle_Odometry(const gz::msgs::Odometry& msg);
+    void handle_LogicalCamera(const gz::msgs::LogicalCameraImage& msg);
 };
 
 // vi: ts=4 sw=4 et
