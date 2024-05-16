@@ -1,7 +1,7 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "clients/gz_client.hpp"
-#include "proto/udp_link.hpp"
+#include "link/gz_client.hpp"
+#include "link/udp_link.hpp"
 #include "synapse_tinyframe/TinyFrame.h"
 
 #include <memory>

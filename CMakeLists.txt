@@ -18,12 +18,11 @@ find_package(Boost COMPONENTS system REQUIRED)
 
 add_executable(${PROJECT_NAME}
   src/${PROJECT_NAME}.cpp
-  src/clients/gz_client.cpp
-  #src/clients/tcp_client.cpp
-  src/proto/udp_link.cpp
+  src/link/gz_client.cpp
+  src/link/udp_link.cpp
 )
 ament_target_dependencies(${PROJECT_NAME} synapse_tinyframe synapse_protobuf gz-transport13 Boost rclcpp)
-target_include_directories(${PROJECT_NAME} PRIVATE src/clients)
+target_include_directories(${PROJECT_NAME} PRIVATE src/link)
 
 #==========================================================
 # install

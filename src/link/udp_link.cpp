@@ -10,7 +10,7 @@
 #include <boost/asio/error.hpp>
 #include <boost/system/error_code.hpp>
 
-#include "../clients/gz_client.hpp"
+#include "gz_client.hpp"
 #include "udp_link.hpp"
 
 using boost::asio::ip::udp;
