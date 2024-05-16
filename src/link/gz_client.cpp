@@ -17,7 +17,7 @@
 GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
     : tf_(tf)
 {
-    imu_audio_attack_ = true;
+    imu_audio_attack_ = false;
     vehicle_ = vehicle;
     model_prefix_ = "/model/" + vehicle;
     std::string world_prefix = "/world/default";
