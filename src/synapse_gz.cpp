@@ -2,7 +2,6 @@
 
 #include "link/gz_client.hpp"
 #include "link/udp_link.hpp"
-#include "synapse_tinyframe/TinyFrame.h"
 
 #include <memory>
 #include <rclcpp/parameter_value.hpp>
@@ -10,19 +9,11 @@
 std::atomic<bool> g_stop { false };
 std::shared_ptr<UDPLink> g_udp_link = NULL;
 std::shared_ptr<GzClient> g_gz_client = NULL;
-std::shared_ptr<TinyFrame> g_tf = NULL;
 
 void signal_handler(int signum)
 {
     (void)signum;
     g_stop = true;
-}
-
-void ros_entry_point()
-{
-    while (not g_stop) {
-        g_udp_link->run_for(std::chrono::seconds(1));
-    }
 }
 
 void udp_link_entry_point()
@@ -45,7 +36,7 @@ public:
         : Node("synapze_gz")
     {
         this->declare_parameter("host", "127.0.0.1");
-        this->declare_parameter("port", 4241);
+        this->declare_parameter("port", 4243);
         this->declare_parameter("vehicle", "b3rb");
 
         std::string host = this->get_parameter("host").as_string();
@@ -56,8 +47,9 @@ public:
         g_udp_link = std::make_shared<UDPLink>(host, port);
 
         // create gz client
-        g_gz_client = std::make_shared<GzClient>(vehicle, g_udp_link.get()->tf_);
+        g_gz_client = std::make_shared<GzClient>(vehicle);
         g_udp_link.get()->gz_ = g_gz_client;
+        g_gz_client->udp_link_ = g_udp_link;
 
         // start threads
         udp_link_thread_ = std::make_shared<std::thread>(udp_link_entry_point);

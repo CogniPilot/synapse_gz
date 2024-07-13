@@ -14,7 +14,6 @@
 
   <depend>rclcpp</depend>
   <depend>synapse_protobuf</depend>
-  <depend>synapse_tinyframe</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

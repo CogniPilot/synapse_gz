@@ -1,21 +1,25 @@
 #include "gz_client.hpp"
+#include "udp_link.hpp"
 
 #include <boost/bind/bind.hpp>
 #include <boost/function.hpp>
 
+#include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/util/delimited_message_util.h>
 #include <gz/msgs/details/logical_camera_image.pb.h>
 #include <gz/msgs/details/material_color.pb.h>
 #include <synapse_protobuf/battery_state.pb.h>
+#include <synapse_protobuf/frame.pb.h>
 #include <synapse_protobuf/imu.pb.h>
 #include <synapse_protobuf/magnetic_field.pb.h>
 #include <synapse_protobuf/nav_sat_fix.pb.h>
 #include <synapse_protobuf/odometry.pb.h>
 #include <synapse_protobuf/sim_clock.pb.h>
 #include <synapse_protobuf/wheel_odometry.pb.h>
-#include <synapse_tinyframe/SynapseTopics.h>
 
-GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
-    : tf_(tf)
+using namespace google::protobuf::util;
+
+GzClient::GzClient(std::string vehicle)
 {
     imu_audio_attack_ = false;
     vehicle_ = vehicle;
@@ -147,29 +151,34 @@ GzClient::GzClient(std::string vehicle, std::shared_ptr<TinyFrame> const& tf)
     }
 }
 
-void GzClient::tf_send(TF_Msg& frame)
-{
-    TF_Send(tf_.get(), &frame);
-}
-
 void GzClient::handle_Clock(const gz::msgs::Clock& msg)
 {
-    // construct message
-    // syn msg 1-to-1 with gazebo, can pass directly
-
-    // serialize message
-    std::string data;
-    if (!msg.SerializeToString(&data)) {
-        std::cerr << "Failed to serialize SimClock" << std::endl;
-        return;
+    synapse::msgs::SimClock syn_msg;
+    if (msg.has_sim()) {
+        syn_msg.mutable_sim()->set_sec(msg.sim().sec());
+        syn_msg.mutable_sim()->set_nanosec(msg.sim().nsec());
+    }
+    if (msg.has_real()) {
+        syn_msg.mutable_real()->set_sec(msg.real().sec());
+        syn_msg.mutable_real()->set_nanosec(msg.real().nsec());
+    }
+    if (msg.has_system()) {
+        syn_msg.mutable_system()->set_sec(msg.system().sec());
+        syn_msg.mutable_system()->set_nanosec(msg.system().nsec());
+    }
+    if (msg.has_header()) {
+        if (msg.header().has_stamp()) {
+            syn_msg.mutable_header()->mutable_stamp()->set_sec(msg.header().stamp().sec());
+            syn_msg.mutable_header()->mutable_stamp()->set_nanosec(msg.header().stamp().nsec());
+        }
     }
 
-    // send message
-    TF_Msg frame;
-    frame.type = SYNAPSE_SIM_CLOCK_TOPIC;
-    frame.len = data.length();
-    frame.data = (const uint8_t*)data.c_str();
-    tf_send(frame);
+    // serialize message
+    synapse::msgs::Frame frame {};
+    frame.set_topic(synapse::msgs::Topic::TOPIC_SIM_CLOCK);
+    frame.set_allocated_sim_clock(&syn_msg);
+    udp_send(frame);
+    frame.release_sim_clock();
 }
 
 void GzClient::handle_Magnetometer(const gz::msgs::Magnetometer& msg)
@@ -181,18 +190,11 @@ void GzClient::handle_Magnetometer(const gz::msgs::Magnetometer& msg)
     syn_msg.mutable_magnetic_field()->set_z(msg.field_tesla().z());
 
     // serialize message
-    std::string data;
-    if (!syn_msg.SerializeToString(&data)) {
-        std::cerr << "Failed to serialize Magnetometer" << std::endl;
-        return;
-    }
-
-    // send message
-    TF_Msg frame;
-    frame.type = SYNAPSE_MAGNETIC_FIELD_TOPIC;
-    frame.len = data.length();
-    frame.data = (const uint8_t*)data.c_str();
-    tf_send(frame);
+    synapse::msgs::Frame frame {};
+    frame.set_topic(synapse::msgs::Topic::TOPIC_MAGNETIC_FIELD);
+    frame.set_allocated_magnetic_field(&syn_msg);
+    udp_send(frame);
+    frame.release_magnetic_field();
 }
 
 void GzClient::handle_IMU(const gz::msgs::IMU& msg)
@@ -224,19 +226,11 @@ void GzClient::handle_IMU(const gz::msgs::IMU& msg)
     syn_msg.mutable_angular_velocity()->set_z(msg.angular_velocity().z());
 
     // serialize message
-    std::string data;
-    if (!syn_msg.SerializeToString(&data)) {
-        std::cerr << "Failed to serialize IMU" << std::endl;
-        return;
-    }
-
-    // send message
-    TF_Msg frame;
-    frame.type = SYNAPSE_IMU_TOPIC;
-    frame.len = data.length();
-    frame.data = (const uint8_t*)data.c_str();
-
-    tf_send(frame);
+    synapse::msgs::Frame frame {};
+    frame.set_topic(synapse::msgs::Topic::TOPIC_IMU);
+    frame.set_allocated_imu(&syn_msg);
+    udp_send(frame);
+    frame.release_imu();
 }
 
 void GzClient::handle_NavSat(const gz::msgs::NavSat& msg)
@@ -253,38 +247,26 @@ void GzClient::handle_NavSat(const gz::msgs::NavSat& msg)
     syn_msg.set_altitude(msg.altitude());
 
     // serialize message
-    std::string data;
-    if (!syn_msg.SerializeToString(&data)) {
-        std::cerr << "Failed to serialize NavSat" << std::endl;
-        return;
-    }
-
-    // send message
-    TF_Msg frame;
-    frame.type = SYNAPSE_NAV_SAT_FIX_TOPIC;
-    frame.len = data.length();
-    frame.data = (const uint8_t*)data.c_str();
-    tf_send(frame);
+    synapse::msgs::Frame frame {};
+    frame.set_topic(synapse::msgs::Topic::TOPIC_NAV_SAT_FIX);
+    frame.set_allocated_nav_sat_fix(&syn_msg);
+    udp_send(frame);
+    frame.release_nav_sat_fix();
 }
 
 void GzClient::handle_Altimeter(const gz::msgs::Altimeter& msg)
 {
-    // construct message
-    // syn msg 1-to-1 with gazebo, can pass directly
+    synapse::msgs::Altimeter syn_msg;
+    syn_msg.set_vertical_position(msg.vertical_position());
+    syn_msg.set_vertical_velocity(msg.vertical_velocity());
+    syn_msg.set_vertical_reference(msg.vertical_reference());
 
     // serialize message
-    std::string data;
-    if (!msg.SerializeToString(&data)) {
-        std::cerr << "Failed to serialize Altimeter" << std::endl;
-        return;
-    }
-
-    // send message
-    TF_Msg frame;
-    frame.type = SYNAPSE_ALTIMETER_TOPIC;
-    frame.len = data.length();
-    frame.data = (const uint8_t*)data.c_str();
-    tf_send(frame);
+    synapse::msgs::Frame frame {};
+    frame.set_topic(synapse::msgs::Topic::TOPIC_ALTIMETER);
+    frame.set_allocated_alitimeter(&syn_msg);
+    udp_send(frame);
+    frame.release_alitimeter();
 }
 
 void GzClient::handle_BatteryState(const gz::msgs::BatteryState& msg)
@@ -306,18 +288,11 @@ void GzClient::handle_BatteryState(const gz::msgs::BatteryState& msg)
     syn_msg.set_power_supply_status(power_supply_status_map[msg.power_supply_status()]);
 
     // serialize message
-    std::string data;
-    if (!syn_msg.SerializeToString(&data)) {
-        std::cerr << "Failed to serialize BatteryState" << std::endl;
-        return;
-    }
-
-    // send message
-    TF_Msg frame;
-    frame.type = SYNAPSE_BATTERY_STATE_TOPIC;
-    frame.len = data.length();
-    frame.data = (const uint8_t*)data.c_str();
-    tf_send(frame);
+    synapse::msgs::Frame frame {};
+    frame.set_topic(synapse::msgs::Topic::TOPIC_BATTERY_STATE);
+    frame.set_allocated_battery_state(&syn_msg);
+    udp_send(frame);
+    frame.release_battery_state();
 }
 
 void GzClient::handle_LogicalCamera(const gz::msgs::LogicalCameraImage& msg)
@@ -346,18 +321,11 @@ void GzClient::handle_WheelOdometry(const gz::msgs::Model& msg)
     syn_msg.set_rotation(rotation);
 
     // serialize message
-    std::string data;
-    if (!syn_msg.SerializeToString(&data)) {
-        std::cerr << "Failed to serialize WheelOdometry" << std::endl;
-        return;
-    }
-
-    // send message
-    TF_Msg frame;
-    frame.type = SYNAPSE_WHEEL_ODOMETRY_TOPIC;
-    frame.len = data.length();
-    frame.data = (const uint8_t*)data.c_str();
-    tf_send(frame);
+    synapse::msgs::Frame frame {};
+    frame.set_topic(synapse::msgs::Topic::TOPIC_WHEEL_ODOMETRY);
+    frame.set_allocated_wheel_odometry(&syn_msg);
+    udp_send(frame);
+    frame.release_wheel_odometry();
 }
 
 void GzClient::handle_Odometry(const gz::msgs::Odometry& msg)
@@ -409,18 +377,107 @@ void GzClient::handle_Odometry(const gz::msgs::Odometry& msg)
     }
 
     // serialize message
-    std::string data;
-    if (!syn_msg.SerializeToString(&data)) {
-        std::cerr << "Failed to serialize Odometry" << std::endl;
-        return;
+    synapse::msgs::Frame frame {};
+    frame.set_topic(synapse::msgs::Topic::TOPIC_ODOMETRY);
+    frame.set_allocated_odometry(&syn_msg);
+    udp_send(frame);
+    frame.release_odometry();
+}
+
+void GzClient::publish_actuators(const synapse::msgs::Actuators& msg)
+{
+    gz::msgs::Actuators gz_msg;
+
+    for (auto it = msg.position().begin(); it != msg.position().end(); ++it) {
+        gz_msg.add_position(*it);
     }
 
-    // send message
-    TF_Msg frame;
-    frame.type = SYNAPSE_ODOMETRY_TOPIC;
-    frame.len = data.length();
-    frame.data = (const uint8_t*)data.c_str();
-    tf_send(frame);
+    for (auto it = msg.velocity().begin(); it != msg.velocity().end(); ++it) {
+        gz_msg.add_velocity(*it);
+    }
+
+    for (auto it = msg.normalized().begin(); it != msg.normalized().end(); ++it) {
+        gz_msg.add_normalized(*it);
+    }
+
+    pub_actuators_.Publish(gz_msg);
+}
+
+void GzClient::publish_led_array(const synapse::msgs::LEDArray& msg)
+{
+    for (int i = 0; i < msg.led_size(); ++i) {
+        auto led = msg.led(i);
+
+        std::string name = "led_" + std::to_string(led.index());
+
+        double intensity = 5.0 * (led.r() + led.b() + led.g()) / (3 * 255.0);
+        double scale = 10.0;
+
+        {
+            gz::msgs::MaterialColor msg;
+            msg.set_entity_match(gz::msgs::MaterialColor_EntityMatch::MaterialColor_EntityMatch_ALL);
+            msg.mutable_entity()->set_name(name);
+            msg.mutable_ambient()->set_r(std::min(scale * led.r() / 255.0, 1.0));
+            msg.mutable_ambient()->set_g(std::min(scale * led.g() / 255.0, 1.0));
+            msg.mutable_ambient()->set_b(std::min(scale * led.b() / 255.0, 1.0));
+            msg.mutable_ambient()->set_a(0.75);
+
+            msg.mutable_diffuse()->set_r(std::min(scale * led.r() / 255.0, 1.0));
+            msg.mutable_diffuse()->set_g(std::min(scale * led.g() / 255.0, 1.0));
+            msg.mutable_diffuse()->set_b(std::min(scale * led.b() / 255.0, 1.0));
+            msg.mutable_diffuse()->set_a(0.75);
+
+            msg.mutable_specular()->set_r(std::min(scale * led.r() / 255.0, 1.0));
+            msg.mutable_specular()->set_g(std::min(scale * led.g() / 255.0, 1.0));
+            msg.mutable_specular()->set_b(std::min(scale * led.b() / 255.0, 1.0));
+            msg.mutable_specular()->set_a(0.75);
+
+            msg.mutable_emissive()->set_r(std::min(scale * led.r() / 255.0, 1.0));
+            msg.mutable_emissive()->set_g(std::min(scale * led.g() / 255.0, 1.0));
+            msg.mutable_emissive()->set_b(std::min(scale * led.b() / 255.0, 1.0));
+            msg.mutable_emissive()->set_a(0.75);
+            pub_material_color_.Publish(msg);
+        }
+
+        {
+            gz::msgs::Light msg;
+            msg.set_name(name);
+            msg.set_type(gz::msgs::Light::LightType::Light_LightType_SPOT);
+
+            msg.mutable_diffuse()->set_r(std::min(scale * led.r() / 255.0, 1.0));
+            msg.mutable_diffuse()->set_g(std::min(scale * led.g() / 255.0, 1.0));
+            msg.mutable_diffuse()->set_b(std::min(scale * led.b() / 255.0, 1.0));
+            msg.mutable_diffuse()->set_a(0.75);
+
+            msg.mutable_specular()->set_r(std::min(scale * led.r() / 255.0, 1.0));
+            msg.mutable_specular()->set_g(std::min(scale * led.g() / 255.0, 1.0));
+            msg.mutable_specular()->set_b(std::min(scale * led.b() / 255.0, 1.0));
+            msg.mutable_specular()->set_a(0.75);
+
+            msg.set_spot_inner_angle(0.5);
+            msg.set_spot_outer_angle(1.5);
+            msg.set_spot_falloff(0.0);
+            msg.set_attenuation_constant(1.0);
+            msg.set_attenuation_linear(1.0);
+            msg.set_attenuation_quadratic(1.0);
+            msg.set_intensity(intensity);
+            msg.set_range(100.0);
+
+            pub_lighting_config_.Publish(msg);
+        }
+    }
+}
+
+void GzClient::udp_send(const synapse::msgs::Frame& frame) const
+{
+    std::stringstream stream;
+    if (!SerializeDelimitedToOstream(frame, &stream)) {
+        std::cerr << "Failed to serialize " << frame.topic() << std::endl;
+        return;
+    }
+    if (udp_link_ != nullptr) {
+        udp_link_.get()->write((const uint8_t*)stream.str().c_str(), stream.str().length());
+    }
 }
 
 // vi: ts=4 sw=4 et

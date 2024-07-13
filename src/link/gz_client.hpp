@@ -3,15 +3,18 @@
 
 #include <gz/msgs/details/logical_camera_image.pb.h>
 #include <gz/transport/Publisher.hh>
-#include <memory>
 #include <string>
 
 #include <gz/msgs.hh>
 #include <gz/transport/Node.hh>
 
-#include "synapse_tinyframe/TinyFrame.h"
+#include "synapse_protobuf/led_array.pb.h"
+#include <synapse_protobuf/actuators.pb.h>
+#include <synapse_protobuf/frame.pb.h>
+#include <synapse_protobuf/odometry.pb.h>
+#include <synapse_protobuf/twist.pb.h>
 
-class UdpClient;
+class UDPLink;
 
 class GzClient : public gz::transport::Node {
 private:
@@ -30,15 +33,15 @@ private:
     std::string topic_sub_wheel_odometry_;
     std::string topic_sub_odometry_;
     std::string topic_sub_logical_camera_;
-    std::shared_ptr<TinyFrame> tf_;
 
 public:
-    UdpClient* udp_client_;
+    std::shared_ptr<UDPLink> udp_link_ { NULL };
     gz::transport::Node::Publisher pub_actuators_;
     gz::transport::Node::Publisher pub_lighting_config_;
     gz::transport::Node::Publisher pub_material_color_;
-    GzClient(std::string prefix, std::shared_ptr<TinyFrame> const& tf);
-    void tf_send(TF_Msg& frame);
+    GzClient(std::string prefix);
+
+    // gazebo listeners
     void handle_Clock(const gz::msgs::Clock& msg);
     void handle_Magnetometer(const gz::msgs::Magnetometer& msg);
     void handle_IMU(const gz::msgs::IMU& msg);
@@ -48,6 +51,13 @@ public:
     void handle_WheelOdometry(const gz::msgs::Model& msg);
     void handle_Odometry(const gz::msgs::Odometry& msg);
     void handle_LogicalCamera(const gz::msgs::LogicalCameraImage& msg);
+
+    // publish to gazebo
+    void publish_actuators(const synapse::msgs::Actuators& msg);
+    void publish_led_array(const synapse::msgs::LEDArray& msg);
+
+    // write
+    void udp_send(const synapse::msgs::Frame& frame) const;
 };
 
 // vi: ts=4 sw=4 et
