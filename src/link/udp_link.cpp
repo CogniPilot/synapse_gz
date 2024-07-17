@@ -1,10 +1,10 @@
-#include <synapse_protobuf/nav_sat_fix.pb.h>
+#include <synapse_pb/nav_sat_fix.pb.h>
 
-#include "synapse_protobuf/frame.pb.h"
-#include "synapse_protobuf/led_array.pb.h"
-#include <synapse_protobuf/actuators.pb.h>
-#include <synapse_protobuf/odometry.pb.h>
-#include <synapse_protobuf/twist.pb.h>
+#include "synapse_pb/frame.pb.h"
+#include "synapse_pb/led_array.pb.h"
+#include <synapse_pb/actuators.pb.h>
+#include <synapse_pb/odometry.pb.h>
+#include <synapse_pb/twist.pb.h>
 
 #include <boost/asio/error.hpp>
 #include <boost/system/error_code.hpp>
@@ -53,7 +53,7 @@ void UDPLink::rx_handler(const boost::system::error_code& ec, std::size_t bytes_
     } else if (ec == boost::system::errc::success) {
         const std::lock_guard<std::mutex> lock(guard_rx_buf_);
         auto stream = google::protobuf::io::CodedInputStream(rx_buf_, bytes_transferred);
-        static synapse::msgs::Frame frame;
+        static synapse_pb::Frame frame;
         frame.Clear();
 
         // parse protobuf message
@@ -65,12 +65,12 @@ void UDPLink::rx_handler(const boost::system::error_code& ec, std::size_t bytes_
                 }
                 break;
             } else {
-                if (frame.msg_case() == synapse::msgs::Frame::kActuators) {
-                    if (frame.topic() == synapse::msgs::TOPIC_ACTUATORS) {
+                if (frame.msg_case() == synapse_pb::Frame::kActuators) {
+                    if (frame.topic() == synapse_pb::TOPIC_ACTUATORS) {
                         gz_->publish_actuators(frame.actuators());
                     }
-                } else if (frame.msg_case() == synapse::msgs::Frame::kLedArray) {
-                    if (frame.topic() == synapse::msgs::TOPIC_LED_ARRAY) {
+                } else if (frame.msg_case() == synapse_pb::Frame::kLedArray) {
+                    if (frame.topic() == synapse_pb::TOPIC_LED_ARRAY) {
                         gz_->publish_led_array(frame.led_array());
                     }
                 } else {

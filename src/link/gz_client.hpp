@@ -8,11 +8,11 @@
 #include <gz/msgs.hh>
 #include <gz/transport/Node.hh>
 
-#include "synapse_protobuf/led_array.pb.h"
-#include <synapse_protobuf/actuators.pb.h>
-#include <synapse_protobuf/frame.pb.h>
-#include <synapse_protobuf/odometry.pb.h>
-#include <synapse_protobuf/twist.pb.h>
+#include "synapse_pb/led_array.pb.h"
+#include <synapse_pb/actuators.pb.h>
+#include <synapse_pb/frame.pb.h>
+#include <synapse_pb/odometry.pb.h>
+#include <synapse_pb/twist.pb.h>
 
 class UDPLink;
 
@@ -53,11 +53,11 @@ public:
     void handle_LogicalCamera(const gz::msgs::LogicalCameraImage& msg);
 
     // publish to gazebo
-    void publish_actuators(const synapse::msgs::Actuators& msg);
-    void publish_led_array(const synapse::msgs::LEDArray& msg);
+    void publish_actuators(const synapse_pb::Actuators& msg);
+    void publish_led_array(const synapse_pb::LEDArray& msg);
 
     // write
-    void udp_send(const synapse::msgs::Frame& frame) const;
+    void udp_send(const synapse_pb::Frame& frame) const;
 };
 
 // vi: ts=4 sw=4 et
