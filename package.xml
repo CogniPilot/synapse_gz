@@ -13,7 +13,7 @@
   <test_depend>ament_lint_common</test_depend>
 
   <depend>rclcpp</depend>
-  <depend>synapse_protobuf</depend>
+  <depend>synapse_pb</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

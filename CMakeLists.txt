@@ -11,7 +11,7 @@ endif()
 # find dependencies
 find_package(rclcpp REQUIRED)
 find_package(ament_cmake REQUIRED)
-find_package(synapse_protobuf REQUIRED)
+find_package(synapse_pb REQUIRED)
 find_package(gz-transport13 REQUIRED)
 find_package(Boost COMPONENTS system REQUIRED)
 
@@ -20,7 +20,7 @@ add_executable(${PROJECT_NAME}
   src/link/gz_client.cpp
   src/link/udp_link.cpp
 )
-ament_target_dependencies(${PROJECT_NAME} synapse_protobuf gz-transport13 Boost rclcpp)
+ament_target_dependencies(${PROJECT_NAME} synapse_pb gz-transport13 Boost rclcpp)
 target_include_directories(${PROJECT_NAME} PRIVATE src/link)
 
 #==========================================================

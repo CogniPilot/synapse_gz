@@ -8,14 +8,14 @@
 #include <google/protobuf/util/delimited_message_util.h>
 #include <gz/msgs/details/logical_camera_image.pb.h>
 #include <gz/msgs/details/material_color.pb.h>
-#include <synapse_protobuf/battery_state.pb.h>
-#include <synapse_protobuf/frame.pb.h>
-#include <synapse_protobuf/imu.pb.h>
-#include <synapse_protobuf/magnetic_field.pb.h>
-#include <synapse_protobuf/nav_sat_fix.pb.h>
-#include <synapse_protobuf/odometry.pb.h>
-#include <synapse_protobuf/sim_clock.pb.h>
-#include <synapse_protobuf/wheel_odometry.pb.h>
+#include <synapse_pb/battery_state.pb.h>
+#include <synapse_pb/frame.pb.h>
+#include <synapse_pb/imu.pb.h>
+#include <synapse_pb/magnetic_field.pb.h>
+#include <synapse_pb/nav_sat_fix.pb.h>
+#include <synapse_pb/odometry.pb.h>
+#include <synapse_pb/sim_clock.pb.h>
+#include <synapse_pb/wheel_odometry.pb.h>
 
 using namespace google::protobuf::util;
 
@@ -153,7 +153,7 @@ GzClient::GzClient(std::string vehicle)
 
 void GzClient::handle_Clock(const gz::msgs::Clock& msg)
 {
-    synapse::msgs::SimClock syn_msg;
+    synapse_pb::SimClock syn_msg;
     if (msg.has_sim()) {
         syn_msg.mutable_sim()->set_sec(msg.sim().sec());
         syn_msg.mutable_sim()->set_nanosec(msg.sim().nsec());
@@ -174,8 +174,8 @@ void GzClient::handle_Clock(const gz::msgs::Clock& msg)
     }
 
     // serialize message
-    synapse::msgs::Frame frame {};
-    frame.set_topic(synapse::msgs::Topic::TOPIC_SIM_CLOCK);
+    synapse_pb::Frame frame {};
+    frame.set_topic(synapse_pb::Topic::TOPIC_SIM_CLOCK);
     frame.set_allocated_sim_clock(&syn_msg);
     udp_send(frame);
     frame.release_sim_clock();
@@ -184,14 +184,14 @@ void GzClient::handle_Clock(const gz::msgs::Clock& msg)
 void GzClient::handle_Magnetometer(const gz::msgs::Magnetometer& msg)
 {
     // construct message
-    synapse::msgs::MagneticField syn_msg;
+    synapse_pb::MagneticField syn_msg;
     syn_msg.mutable_magnetic_field()->set_x(msg.field_tesla().x());
     syn_msg.mutable_magnetic_field()->set_y(msg.field_tesla().y());
     syn_msg.mutable_magnetic_field()->set_z(msg.field_tesla().z());
 
     // serialize message
-    synapse::msgs::Frame frame {};
-    frame.set_topic(synapse::msgs::Topic::TOPIC_MAGNETIC_FIELD);
+    synapse_pb::Frame frame {};
+    frame.set_topic(synapse_pb::Topic::TOPIC_MAGNETIC_FIELD);
     frame.set_allocated_magnetic_field(&syn_msg);
     udp_send(frame);
     frame.release_magnetic_field();
@@ -217,7 +217,7 @@ void GzClient::handle_IMU(const gz::msgs::IMU& msg)
     }
 
     // construct message
-    synapse::msgs::Imu syn_msg;
+    synapse_pb::Imu syn_msg;
     syn_msg.mutable_linear_acceleration()->set_x(msg.linear_acceleration().x());
     syn_msg.mutable_linear_acceleration()->set_y(msg.linear_acceleration().y());
     syn_msg.mutable_linear_acceleration()->set_z(msg.linear_acceleration().z());
@@ -226,8 +226,8 @@ void GzClient::handle_IMU(const gz::msgs::IMU& msg)
     syn_msg.mutable_angular_velocity()->set_z(msg.angular_velocity().z());
 
     // serialize message
-    synapse::msgs::Frame frame {};
-    frame.set_topic(synapse::msgs::Topic::TOPIC_IMU);
+    synapse_pb::Frame frame {};
+    frame.set_topic(synapse_pb::Topic::TOPIC_IMU);
     frame.set_allocated_imu(&syn_msg);
     udp_send(frame);
     frame.release_imu();
@@ -236,7 +236,7 @@ void GzClient::handle_IMU(const gz::msgs::IMU& msg)
 void GzClient::handle_NavSat(const gz::msgs::NavSat& msg)
 {
     // construct message
-    synapse::msgs::NavSatFix syn_msg;
+    synapse_pb::NavSatFix syn_msg;
     syn_msg.mutable_header()->set_frame_id(msg.frame_id());
     syn_msg.mutable_header()->mutable_stamp()->set_sec(
         msg.header().stamp().sec());
@@ -247,8 +247,8 @@ void GzClient::handle_NavSat(const gz::msgs::NavSat& msg)
     syn_msg.set_altitude(msg.altitude());
 
     // serialize message
-    synapse::msgs::Frame frame {};
-    frame.set_topic(synapse::msgs::Topic::TOPIC_NAV_SAT_FIX);
+    synapse_pb::Frame frame {};
+    frame.set_topic(synapse_pb::Topic::TOPIC_NAV_SAT_FIX);
     frame.set_allocated_nav_sat_fix(&syn_msg);
     udp_send(frame);
     frame.release_nav_sat_fix();
@@ -256,14 +256,14 @@ void GzClient::handle_NavSat(const gz::msgs::NavSat& msg)
 
 void GzClient::handle_Altimeter(const gz::msgs::Altimeter& msg)
 {
-    synapse::msgs::Altimeter syn_msg;
+    synapse_pb::Altimeter syn_msg;
     syn_msg.set_vertical_position(msg.vertical_position());
     syn_msg.set_vertical_velocity(msg.vertical_velocity());
     syn_msg.set_vertical_reference(msg.vertical_reference());
 
     // serialize message
-    synapse::msgs::Frame frame {};
-    frame.set_topic(synapse::msgs::Topic::TOPIC_ALTIMETER);
+    synapse_pb::Frame frame {};
+    frame.set_topic(synapse_pb::Topic::TOPIC_ALTIMETER);
     frame.set_allocated_alitimeter(&syn_msg);
     udp_send(frame);
     frame.release_alitimeter();
@@ -272,14 +272,14 @@ void GzClient::handle_Altimeter(const gz::msgs::Altimeter& msg)
 void GzClient::handle_BatteryState(const gz::msgs::BatteryState& msg)
 {
     // construct message
-    static std::map<gz::msgs::BatteryState::PowerSupplyStatus, synapse::msgs::BatteryState::PowerSupplyStatus> power_supply_status_map = {
-        { gz::msgs::BatteryState_PowerSupplyStatus_UNKNOWN, synapse::msgs::BatteryState_PowerSupplyStatus_UNKNOWN_STATUS },
-        { gz::msgs::BatteryState_PowerSupplyStatus_CHARGING, synapse::msgs::BatteryState_PowerSupplyStatus_CHARGING },
-        { gz::msgs::BatteryState_PowerSupplyStatus_DISCHARGING, synapse::msgs::BatteryState_PowerSupplyStatus_DISCHARGING },
-        { gz::msgs::BatteryState_PowerSupplyStatus_NOT_CHARGING, synapse::msgs::BatteryState_PowerSupplyStatus_NOT_CHARGING },
-        { gz::msgs::BatteryState_PowerSupplyStatus_FULL, synapse::msgs::BatteryState_PowerSupplyStatus_FULL }
+    static std::map<gz::msgs::BatteryState::PowerSupplyStatus, synapse_pb::BatteryState::PowerSupplyStatus> power_supply_status_map = {
+        { gz::msgs::BatteryState_PowerSupplyStatus_UNKNOWN, synapse_pb::BatteryState_PowerSupplyStatus_UNKNOWN_STATUS },
+        { gz::msgs::BatteryState_PowerSupplyStatus_CHARGING, synapse_pb::BatteryState_PowerSupplyStatus_CHARGING },
+        { gz::msgs::BatteryState_PowerSupplyStatus_DISCHARGING, synapse_pb::BatteryState_PowerSupplyStatus_DISCHARGING },
+        { gz::msgs::BatteryState_PowerSupplyStatus_NOT_CHARGING, synapse_pb::BatteryState_PowerSupplyStatus_NOT_CHARGING },
+        { gz::msgs::BatteryState_PowerSupplyStatus_FULL, synapse_pb::BatteryState_PowerSupplyStatus_FULL }
     };
-    synapse::msgs::BatteryState syn_msg;
+    synapse_pb::BatteryState syn_msg;
     syn_msg.set_voltage(msg.voltage());
     syn_msg.set_current(msg.current());
     syn_msg.set_charge(msg.charge());
@@ -288,8 +288,8 @@ void GzClient::handle_BatteryState(const gz::msgs::BatteryState& msg)
     syn_msg.set_power_supply_status(power_supply_status_map[msg.power_supply_status()]);
 
     // serialize message
-    synapse::msgs::Frame frame {};
-    frame.set_topic(synapse::msgs::Topic::TOPIC_BATTERY_STATE);
+    synapse_pb::Frame frame {};
+    frame.set_topic(synapse_pb::Topic::TOPIC_BATTERY_STATE);
     frame.set_allocated_battery_state(&syn_msg);
     udp_send(frame);
     frame.release_battery_state();
@@ -309,7 +309,7 @@ void GzClient::handle_LogicalCamera(const gz::msgs::LogicalCameraImage& msg)
 void GzClient::handle_WheelOdometry(const gz::msgs::Model& msg)
 {
     // construct message
-    synapse::msgs::WheelOdometry syn_msg;
+    synapse_pb::WheelOdometry syn_msg;
     // assume differential so average all wheels for odom
     // where odom is mounted on motor
     int n_wheels = msg.joint_size();
@@ -321,8 +321,8 @@ void GzClient::handle_WheelOdometry(const gz::msgs::Model& msg)
     syn_msg.set_rotation(rotation);
 
     // serialize message
-    synapse::msgs::Frame frame {};
-    frame.set_topic(synapse::msgs::Topic::TOPIC_WHEEL_ODOMETRY);
+    synapse_pb::Frame frame {};
+    frame.set_topic(synapse_pb::Topic::TOPIC_WHEEL_ODOMETRY);
     frame.set_allocated_wheel_odometry(&syn_msg);
     udp_send(frame);
     frame.release_wheel_odometry();
@@ -331,7 +331,7 @@ void GzClient::handle_WheelOdometry(const gz::msgs::Model& msg)
 void GzClient::handle_Odometry(const gz::msgs::Odometry& msg)
 {
     // construct message
-    synapse::msgs::Odometry syn_msg;
+    synapse_pb::Odometry syn_msg;
 
     if (msg.has_header()) {
         for (auto map = msg.header().data().begin(); map < msg.header().data().end(); map++) {
@@ -377,14 +377,14 @@ void GzClient::handle_Odometry(const gz::msgs::Odometry& msg)
     }
 
     // serialize message
-    synapse::msgs::Frame frame {};
-    frame.set_topic(synapse::msgs::Topic::TOPIC_ODOMETRY);
+    synapse_pb::Frame frame {};
+    frame.set_topic(synapse_pb::Topic::TOPIC_ODOMETRY);
     frame.set_allocated_odometry(&syn_msg);
     udp_send(frame);
     frame.release_odometry();
 }
 
-void GzClient::publish_actuators(const synapse::msgs::Actuators& msg)
+void GzClient::publish_actuators(const synapse_pb::Actuators& msg)
 {
     gz::msgs::Actuators gz_msg;
 
@@ -403,7 +403,7 @@ void GzClient::publish_actuators(const synapse::msgs::Actuators& msg)
     pub_actuators_.Publish(gz_msg);
 }
 
-void GzClient::publish_led_array(const synapse::msgs::LEDArray& msg)
+void GzClient::publish_led_array(const synapse_pb::LEDArray& msg)
 {
     for (int i = 0; i < msg.led_size(); ++i) {
         auto led = msg.led(i);
@@ -468,7 +468,7 @@ void GzClient::publish_led_array(const synapse::msgs::LEDArray& msg)
     }
 }
 
-void GzClient::udp_send(const synapse::msgs::Frame& frame) const
+void GzClient::udp_send(const synapse_pb::Frame& frame) const
 {
     std::stringstream stream;
     if (!SerializeDelimitedToOstream(frame, &stream)) {
