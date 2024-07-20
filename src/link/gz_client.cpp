@@ -155,27 +155,26 @@ void GzClient::handle_Clock(const gz::msgs::Clock& msg)
 {
     synapse_pb::SimClock syn_msg;
     if (msg.has_sim()) {
-        syn_msg.mutable_sim()->set_sec(msg.sim().sec());
-        syn_msg.mutable_sim()->set_nanosec(msg.sim().nsec());
+        syn_msg.mutable_sim()->set_seconds(msg.sim().sec());
+        syn_msg.mutable_sim()->set_nanos(msg.sim().nsec());
     }
     if (msg.has_real()) {
-        syn_msg.mutable_real()->set_sec(msg.real().sec());
-        syn_msg.mutable_real()->set_nanosec(msg.real().nsec());
+        syn_msg.mutable_real()->set_seconds(msg.real().sec());
+        syn_msg.mutable_real()->set_nanos(msg.real().nsec());
     }
     if (msg.has_system()) {
-        syn_msg.mutable_system()->set_sec(msg.system().sec());
-        syn_msg.mutable_system()->set_nanosec(msg.system().nsec());
+        syn_msg.mutable_system()->set_seconds(msg.system().sec());
+        syn_msg.mutable_system()->set_nanos(msg.system().nsec());
     }
     if (msg.has_header()) {
         if (msg.header().has_stamp()) {
-            syn_msg.mutable_header()->mutable_stamp()->set_sec(msg.header().stamp().sec());
-            syn_msg.mutable_header()->mutable_stamp()->set_nanosec(msg.header().stamp().nsec());
+            syn_msg.mutable_stamp()->set_seconds(msg.header().stamp().sec());
+            syn_msg.mutable_stamp()->set_nanos(msg.header().stamp().nsec());
         }
     }
 
     // serialize message
     synapse_pb::Frame frame {};
-    frame.set_topic(synapse_pb::Topic::TOPIC_SIM_CLOCK);
     frame.set_allocated_sim_clock(&syn_msg);
     udp_send(frame);
     frame.release_sim_clock();
@@ -191,7 +190,6 @@ void GzClient::handle_Magnetometer(const gz::msgs::Magnetometer& msg)
 
     // serialize message
     synapse_pb::Frame frame {};
-    frame.set_topic(synapse_pb::Topic::TOPIC_MAGNETIC_FIELD);
     frame.set_allocated_magnetic_field(&syn_msg);
     udp_send(frame);
     frame.release_magnetic_field();
@@ -227,7 +225,6 @@ void GzClient::handle_IMU(const gz::msgs::IMU& msg)
 
     // serialize message
     synapse_pb::Frame frame {};
-    frame.set_topic(synapse_pb::Topic::TOPIC_IMU);
     frame.set_allocated_imu(&syn_msg);
     udp_send(frame);
     frame.release_imu();
@@ -237,10 +234,9 @@ void GzClient::handle_NavSat(const gz::msgs::NavSat& msg)
 {
     // construct message
     synapse_pb::NavSatFix syn_msg;
-    syn_msg.mutable_header()->set_frame_id(msg.frame_id());
-    syn_msg.mutable_header()->mutable_stamp()->set_sec(
+    syn_msg.mutable_stamp()->set_seconds(
         msg.header().stamp().sec());
-    syn_msg.mutable_header()->mutable_stamp()->set_nanosec(
+    syn_msg.mutable_stamp()->set_nanos(
         msg.header().stamp().nsec());
     syn_msg.set_latitude(msg.latitude_deg());
     syn_msg.set_longitude(msg.longitude_deg());
@@ -248,7 +244,6 @@ void GzClient::handle_NavSat(const gz::msgs::NavSat& msg)
 
     // serialize message
     synapse_pb::Frame frame {};
-    frame.set_topic(synapse_pb::Topic::TOPIC_NAV_SAT_FIX);
     frame.set_allocated_nav_sat_fix(&syn_msg);
     udp_send(frame);
     frame.release_nav_sat_fix();
@@ -263,7 +258,6 @@ void GzClient::handle_Altimeter(const gz::msgs::Altimeter& msg)
 
     // serialize message
     synapse_pb::Frame frame {};
-    frame.set_topic(synapse_pb::Topic::TOPIC_ALTIMETER);
     frame.set_allocated_alitimeter(&syn_msg);
     udp_send(frame);
     frame.release_alitimeter();
@@ -289,7 +283,6 @@ void GzClient::handle_BatteryState(const gz::msgs::BatteryState& msg)
 
     // serialize message
     synapse_pb::Frame frame {};
-    frame.set_topic(synapse_pb::Topic::TOPIC_BATTERY_STATE);
     frame.set_allocated_battery_state(&syn_msg);
     udp_send(frame);
     frame.release_battery_state();
@@ -322,7 +315,6 @@ void GzClient::handle_WheelOdometry(const gz::msgs::Model& msg)
 
     // serialize message
     synapse_pb::Frame frame {};
-    frame.set_topic(synapse_pb::Topic::TOPIC_WHEEL_ODOMETRY);
     frame.set_allocated_wheel_odometry(&syn_msg);
     udp_send(frame);
     frame.release_wheel_odometry();
@@ -336,49 +328,49 @@ void GzClient::handle_Odometry(const gz::msgs::Odometry& msg)
     if (msg.has_header()) {
         for (auto map = msg.header().data().begin(); map < msg.header().data().end(); map++) {
             if (map->key() == "frame_id") {
-                syn_msg.mutable_header()->set_frame_id(map->value(0));
+                syn_msg.set_frame_id(map->value(0));
             } else if (map->key() == "child_frame_id") {
                 syn_msg.set_child_frame_id(map->value(0));
             }
         }
         if (msg.header().has_stamp()) {
-            syn_msg.mutable_header()->mutable_stamp()->set_sec(
+            syn_msg.mutable_stamp()->set_seconds(
                 msg.header().stamp().sec());
-            syn_msg.mutable_header()->mutable_stamp()->set_nanosec(
+            syn_msg.mutable_stamp()->set_nanos(
                 msg.header().stamp().nsec());
         }
     }
 
     if (msg.has_pose()) {
         if (msg.pose().has_position()) {
-            syn_msg.mutable_pose()->mutable_pose()->mutable_position()->set_x(msg.pose().position().x());
-            syn_msg.mutable_pose()->mutable_pose()->mutable_position()->set_y(msg.pose().position().y());
-            syn_msg.mutable_pose()->mutable_pose()->mutable_position()->set_z(msg.pose().position().z());
+            syn_msg.mutable_pose()->mutable_position()->set_x(msg.pose().position().x());
+            syn_msg.mutable_pose()->mutable_position()->set_y(msg.pose().position().y());
+            syn_msg.mutable_pose()->mutable_position()->set_z(msg.pose().position().z());
         }
+
         if (msg.pose().has_orientation()) {
-            syn_msg.mutable_pose()->mutable_pose()->mutable_orientation()->set_x(msg.pose().orientation().x());
-            syn_msg.mutable_pose()->mutable_pose()->mutable_orientation()->set_y(msg.pose().orientation().y());
-            syn_msg.mutable_pose()->mutable_pose()->mutable_orientation()->set_z(msg.pose().orientation().z());
-            syn_msg.mutable_pose()->mutable_pose()->mutable_orientation()->set_w(msg.pose().orientation().w());
+            syn_msg.mutable_pose()->mutable_orientation()->set_x(msg.pose().orientation().x());
+            syn_msg.mutable_pose()->mutable_orientation()->set_y(msg.pose().orientation().y());
+            syn_msg.mutable_pose()->mutable_orientation()->set_z(msg.pose().orientation().z());
+            syn_msg.mutable_pose()->mutable_orientation()->set_w(msg.pose().orientation().w());
         }
     }
 
     if (msg.has_twist()) {
         if (msg.twist().has_linear()) {
-            syn_msg.mutable_twist()->mutable_twist()->mutable_linear()->set_x(msg.twist().linear().x());
-            syn_msg.mutable_twist()->mutable_twist()->mutable_linear()->set_y(msg.twist().linear().y());
-            syn_msg.mutable_twist()->mutable_twist()->mutable_linear()->set_z(msg.twist().linear().z());
+            syn_msg.mutable_twist()->mutable_linear()->set_x(msg.twist().linear().x());
+            syn_msg.mutable_twist()->mutable_linear()->set_y(msg.twist().linear().y());
+            syn_msg.mutable_twist()->mutable_linear()->set_z(msg.twist().linear().z());
         }
         if (msg.twist().has_angular()) {
-            syn_msg.mutable_twist()->mutable_twist()->mutable_angular()->set_x(msg.twist().angular().x());
-            syn_msg.mutable_twist()->mutable_twist()->mutable_angular()->set_y(msg.twist().angular().y());
-            syn_msg.mutable_twist()->mutable_twist()->mutable_angular()->set_z(msg.twist().angular().z());
+            syn_msg.mutable_twist()->mutable_angular()->set_x(msg.twist().angular().x());
+            syn_msg.mutable_twist()->mutable_angular()->set_y(msg.twist().angular().y());
+            syn_msg.mutable_twist()->mutable_angular()->set_z(msg.twist().angular().z());
         }
     }
 
     // serialize message
     synapse_pb::Frame frame {};
-    frame.set_topic(synapse_pb::Topic::TOPIC_ODOMETRY);
     frame.set_allocated_odometry(&syn_msg);
     udp_send(frame);
     frame.release_odometry();
@@ -472,7 +464,7 @@ void GzClient::udp_send(const synapse_pb::Frame& frame) const
 {
     std::stringstream stream;
     if (!SerializeDelimitedToOstream(frame, &stream)) {
-        std::cerr << "Failed to serialize " << frame.topic() << std::endl;
+        std::cerr << "Failed to serialize " << frame.msg_case() << std::endl;
         return;
     }
     if (udp_link_ != nullptr) {
