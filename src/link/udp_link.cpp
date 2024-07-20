@@ -66,15 +66,11 @@ void UDPLink::rx_handler(const boost::system::error_code& ec, std::size_t bytes_
                 break;
             } else {
                 if (frame.msg_case() == synapse_pb::Frame::kActuators) {
-                    if (frame.topic() == synapse_pb::TOPIC_ACTUATORS) {
-                        gz_->publish_actuators(frame.actuators());
-                    }
+                    gz_->publish_actuators(frame.actuators());
                 } else if (frame.msg_case() == synapse_pb::Frame::kLedArray) {
-                    if (frame.topic() == synapse_pb::TOPIC_LED_ARRAY) {
-                        gz_->publish_led_array(frame.led_array());
-                    }
+                    gz_->publish_led_array(frame.led_array());
                 } else {
-                    // std::cerr << "unhandled message: " << frame.topic() << " : " << frame.msg_case() <<  std::endl;
+                    // std::cerr << "unhandled message: " << frame.msg_case() <<  std::endl;
                 }
             }
         }
