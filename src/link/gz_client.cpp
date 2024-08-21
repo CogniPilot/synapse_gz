@@ -177,7 +177,7 @@ void GzClient::handle_Clock(const gz::msgs::Clock& msg)
     synapse_pb::Frame frame {};
     frame.set_allocated_sim_clock(&syn_msg);
     udp_send(frame);
-    frame.release_sim_clock();
+    (void)frame.release_sim_clock();
 }
 
 void GzClient::handle_Magnetometer(const gz::msgs::Magnetometer& msg)
@@ -192,7 +192,7 @@ void GzClient::handle_Magnetometer(const gz::msgs::Magnetometer& msg)
     synapse_pb::Frame frame {};
     frame.set_allocated_magnetic_field(&syn_msg);
     udp_send(frame);
-    frame.release_magnetic_field();
+    (void)frame.release_magnetic_field();
 }
 
 void GzClient::handle_IMU(const gz::msgs::IMU& msg)
@@ -227,7 +227,7 @@ void GzClient::handle_IMU(const gz::msgs::IMU& msg)
     synapse_pb::Frame frame {};
     frame.set_allocated_imu(&syn_msg);
     udp_send(frame);
-    frame.release_imu();
+    (void)frame.release_imu();
 }
 
 void GzClient::handle_NavSat(const gz::msgs::NavSat& msg)
@@ -246,7 +246,7 @@ void GzClient::handle_NavSat(const gz::msgs::NavSat& msg)
     synapse_pb::Frame frame {};
     frame.set_allocated_nav_sat_fix(&syn_msg);
     udp_send(frame);
-    frame.release_nav_sat_fix();
+    (void)frame.release_nav_sat_fix();
 }
 
 void GzClient::handle_Altimeter(const gz::msgs::Altimeter& msg)
@@ -260,7 +260,7 @@ void GzClient::handle_Altimeter(const gz::msgs::Altimeter& msg)
     synapse_pb::Frame frame {};
     frame.set_allocated_alitimeter(&syn_msg);
     udp_send(frame);
-    frame.release_alitimeter();
+    (void)frame.release_alitimeter();
 }
 
 void GzClient::handle_BatteryState(const gz::msgs::BatteryState& msg)
@@ -285,7 +285,7 @@ void GzClient::handle_BatteryState(const gz::msgs::BatteryState& msg)
     synapse_pb::Frame frame {};
     frame.set_allocated_battery_state(&syn_msg);
     udp_send(frame);
-    frame.release_battery_state();
+    (void)frame.release_battery_state();
 }
 
 void GzClient::handle_LogicalCamera(const gz::msgs::LogicalCameraImage& msg)
@@ -317,7 +317,7 @@ void GzClient::handle_WheelOdometry(const gz::msgs::Model& msg)
     synapse_pb::Frame frame {};
     frame.set_allocated_wheel_odometry(&syn_msg);
     udp_send(frame);
-    frame.release_wheel_odometry();
+    (void)frame.release_wheel_odometry();
 }
 
 void GzClient::handle_Odometry(const gz::msgs::Odometry& msg)
@@ -373,7 +373,7 @@ void GzClient::handle_Odometry(const gz::msgs::Odometry& msg)
     synapse_pb::Frame frame {};
     frame.set_allocated_odometry(&syn_msg);
     udp_send(frame);
-    frame.release_odometry();
+    (void)frame.release_odometry();
 }
 
 void GzClient::publish_actuators(const synapse_pb::Actuators& msg)
