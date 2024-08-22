@@ -71,7 +71,7 @@ void UDPLink::rx_handler(const boost::system::error_code& ec, std::size_t bytes_
                 } else if (frame.msg_case() == synapse_pb::Frame::kLedArray) {
                     gz_->publish_led_array(frame.led_array());
                 } else {
-                    // std::cerr << "unhandled message: " << frame.msg_case() <<  std::endl;
+                    std::cerr << "unhandled message: " << frame.msg_case() <<  std::endl;
                 }
             }
         }
