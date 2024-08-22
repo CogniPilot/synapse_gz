@@ -66,7 +66,6 @@ void UDPLink::rx_handler(const boost::system::error_code& ec, std::size_t bytes_
                 break;
             } else {
                 if (frame.msg_case() == synapse_pb::Frame::kActuators) {
-                    std::cout << "receiving actuators" << std::endl;
                     gz_->publish_actuators(frame.actuators());
                 } else if (frame.msg_case() == synapse_pb::Frame::kLedArray) {
                     gz_->publish_led_array(frame.led_array());
