@@ -19,8 +19,10 @@ using boost::asio::ip::udp;
 using std::placeholders::_1;
 using std::placeholders::_2;
 
-UDPLink::UDPLink(std::string host, int port)
+UDPLink::UDPLink(std::string host, int port, GzClient* gz)
 {
+    gz_ = gz;
+    gz_->udp_link_ = this;
     remote_endpoint_ = *udp::resolver(io_context_).resolve(udp::resolver::query(host, std::to_string(port)));
     my_endpoint_ = udp::endpoint(udp::v4(), GZ_PORT);
 
@@ -70,7 +72,7 @@ void UDPLink::rx_handler(const boost::system::error_code& ec, std::size_t bytes_
                 } else if (frame.msg_case() == synapse_pb::Frame::kLedArray) {
                     gz_->publish_led_array(frame.led_array());
                 } else {
-                    std::cerr << "unhandled message: " << frame.msg_case() <<  std::endl;
+                    std::cerr << "unhandled message: " << frame.msg_case() << std::endl;
                 }
             }
         }

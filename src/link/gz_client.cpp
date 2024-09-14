@@ -468,7 +468,7 @@ void GzClient::udp_send(const synapse_pb::Frame& frame) const
         return;
     }
     if (udp_link_ != nullptr) {
-        udp_link_.get()->write((const uint8_t*)stream.str().c_str(), stream.str().length());
+        udp_link_->write((const uint8_t*)stream.str().c_str(), stream.str().length());
     }
 }
 
