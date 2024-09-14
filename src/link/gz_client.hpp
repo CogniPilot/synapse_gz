@@ -35,7 +35,7 @@ private:
     std::string topic_sub_logical_camera_;
 
 public:
-    std::shared_ptr<UDPLink> udp_link_ { NULL };
+    UDPLink* udp_link_;
     gz::transport::Node::Publisher pub_actuators_;
     gz::transport::Node::Publisher pub_lighting_config_;
     gz::transport::Node::Publisher pub_material_color_;

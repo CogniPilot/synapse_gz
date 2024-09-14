@@ -23,10 +23,10 @@ private:
     };
     boost::asio::ip::udp::endpoint remote_endpoint_;
     boost::asio::ip::udp::endpoint my_endpoint_;
+    GzClient* gz_;
 
 public:
-    std::shared_ptr<GzClient> gz_ {};
-    UDPLink(std::string host, int port);
+    UDPLink(std::string host, int port, GzClient* gz);
     void run_for(std::chrono::seconds sec);
     void write(const uint8_t* buf, uint32_t len);
 
