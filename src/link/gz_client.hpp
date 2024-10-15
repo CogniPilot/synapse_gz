@@ -1,6 +1,7 @@
 #ifndef GZ_CLIENT_HPP
 #define GZ_CLIENT_HPP
 
+#include "rclcpp/rclcpp.hpp"
 #include <gz/msgs/details/logical_camera_image.pb.h>
 #include <gz/transport/Publisher.hh>
 #include <string>
@@ -19,6 +20,7 @@ class UDPLink;
 class GzClient : public gz::transport::Node {
 private:
     bool imu_audio_attack_;
+    rclcpp::Node* node_;
     std::string vehicle_;
     std::string model_prefix_;
     std::string topic_sub_clock_;
@@ -39,7 +41,7 @@ public:
     gz::transport::Node::Publisher pub_actuators_;
     gz::transport::Node::Publisher pub_lighting_config_;
     gz::transport::Node::Publisher pub_material_color_;
-    GzClient(std::string prefix);
+    GzClient(std::string prefix, rclcpp::Node* node);
 
     // gazebo listeners
     void handle_Clock(const gz::msgs::Clock& msg);
