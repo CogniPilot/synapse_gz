@@ -19,8 +19,9 @@
 
 using namespace google::protobuf::util;
 
-GzClient::GzClient(std::string vehicle)
+GzClient::GzClient(std::string vehicle, rclcpp::Node* node)
 {
+    node_ = node;
     imu_audio_attack_ = false;
     vehicle_ = vehicle;
     model_prefix_ = "/model/" + vehicle;
@@ -214,12 +215,12 @@ void GzClient::handle_IMU(const gz::msgs::IMU& msg)
         // printf("no imu attack!\n");
     }
 
-    double bias_gx = 0.01;
-    double bias_gy = -0.01;
-    double bias_gz = 0.01;
-    double bias_ax = 0.01;
-    double bias_ay = -0.01;
-    double bias_az = -0.01;
+    double bias_ax = node_->get_parameter("accel_bias_x").as_double();
+    double bias_ay = node_->get_parameter("accel_bias_y").as_double();
+    double bias_az = node_->get_parameter("accel_bias_z").as_double();
+    double bias_gx = node_->get_parameter("gyro_bias_x").as_double();
+    double bias_gy = node_->get_parameter("gyro_bias_y").as_double();
+    double bias_gz = node_->get_parameter("gyro_bias_z").as_double();
 
     // construct message
     synapse_pb::Imu syn_msg;

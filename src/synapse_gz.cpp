@@ -39,6 +39,14 @@ public:
         this->declare_parameter("port", 4243);
         this->declare_parameter("vehicle", "b3rb");
 
+        this->declare_parameter("accel_bias_x", "0.0");
+        this->declare_parameter("accel_bias_y", "0.0");
+        this->declare_parameter("accel_bias_z", "0.0");
+
+        this->declare_parameter("gyro_bias_x", "0.0");
+        this->declare_parameter("gyro_bias_y", "0.0");
+        this->declare_parameter("gyro_bias_z", "0.0");
+
         std::string host = this->get_parameter("host").as_string();
         int port = this->get_parameter("port").as_int();
         std::string vehicle = this->get_parameter("vehicle").as_string();
@@ -47,7 +55,7 @@ public:
         g_udp_link = std::make_shared<UDPLink>(host, port);
 
         // create gz client
-        g_gz_client = std::make_shared<GzClient>(vehicle);
+        g_gz_client = std::make_shared<GzClient>(vehicle, this);
         g_udp_link.get()->gz_ = g_gz_client;
         g_gz_client->udp_link_ = g_udp_link;
 
