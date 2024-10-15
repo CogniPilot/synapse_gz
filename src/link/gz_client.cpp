@@ -214,14 +214,21 @@ void GzClient::handle_IMU(const gz::msgs::IMU& msg)
         // printf("no imu attack!\n");
     }
 
+    double bias_gx = 0.01;
+    double bias_gy = -0.01;
+    double bias_gz = 0.01;
+    double bias_ax = 0.01;
+    double bias_ay = -0.01;
+    double bias_az = -0.01;
+
     // construct message
     synapse_pb::Imu syn_msg;
-    syn_msg.mutable_linear_acceleration()->set_x(msg.linear_acceleration().x());
-    syn_msg.mutable_linear_acceleration()->set_y(msg.linear_acceleration().y());
-    syn_msg.mutable_linear_acceleration()->set_z(msg.linear_acceleration().z());
-    syn_msg.mutable_angular_velocity()->set_x(msg.angular_velocity().x() + attack);
-    syn_msg.mutable_angular_velocity()->set_y(msg.angular_velocity().y());
-    syn_msg.mutable_angular_velocity()->set_z(msg.angular_velocity().z());
+    syn_msg.mutable_linear_acceleration()->set_x(msg.linear_acceleration().x() + bias_ax);
+    syn_msg.mutable_linear_acceleration()->set_y(msg.linear_acceleration().y() + bias_ay);
+    syn_msg.mutable_linear_acceleration()->set_z(msg.linear_acceleration().z() + bias_az);
+    syn_msg.mutable_angular_velocity()->set_x(msg.angular_velocity().x() + attack + bias_gx);
+    syn_msg.mutable_angular_velocity()->set_y(msg.angular_velocity().y() + bias_gy);
+    syn_msg.mutable_angular_velocity()->set_z(msg.angular_velocity().z() + bias_gz);
 
     // serialize message
     synapse_pb::Frame frame {};
