@@ -39,13 +39,13 @@ public:
         this->declare_parameter("port", 4243);
         this->declare_parameter("vehicle", "b3rb");
 
-        this->declare_parameter("accel_bias_x", "0.0");
-        this->declare_parameter("accel_bias_y", "0.0");
-        this->declare_parameter("accel_bias_z", "0.0");
+        this->declare_parameter("accel_bias_x", 0.0);
+        this->declare_parameter("accel_bias_y", 0.0);
+        this->declare_parameter("accel_bias_z", 0.0);
 
-        this->declare_parameter("gyro_bias_x", "0.0");
-        this->declare_parameter("gyro_bias_y", "0.0");
-        this->declare_parameter("gyro_bias_z", "0.0");
+        this->declare_parameter("gyro_bias_x", 0.0);
+        this->declare_parameter("gyro_bias_y", 0.0);
+        this->declare_parameter("gyro_bias_z", 0.0);
 
         std::string host = this->get_parameter("host").as_string();
         int port = this->get_parameter("port").as_int();
