@@ -19,6 +19,8 @@ ARGUMENTS = [
     DeclareLaunchArgument('use_sim_time', default_value='false',
                           choices=['true', 'false'],
                           description='Use sim time'),
+    DeclareLaunchArgument('gyro_bias_z', default_value='0.0',
+                          description='gyro_bias_z in rad/s'),
 ]
 
 
@@ -37,6 +39,7 @@ def generate_launch_description():
             'port': LaunchConfiguration('port'),
             'use_sim_time': LaunchConfiguration('use_sim_time'),
             'vehicle': LaunchConfiguration('vehicle'),
+            'gyro_bias_z': LaunchConfiguration('gyro_bias_z'),
         }],
         arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')],
         output='screen')
