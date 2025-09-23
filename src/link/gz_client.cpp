@@ -266,9 +266,9 @@ void GzClient::handle_Altimeter(const gz::msgs::Altimeter& msg)
 
     // serialize message
     synapse_pb::Frame frame {};
-    frame.set_allocated_alitimeter(&syn_msg);
+    frame.set_allocated_altimeter(&syn_msg);
     udp_send(frame);
-    (void)frame.release_alitimeter();
+    (void)frame.release_altimeter();
 }
 
 void GzClient::handle_BatteryState(const gz::msgs::BatteryState& msg)
