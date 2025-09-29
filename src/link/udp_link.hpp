@@ -7,26 +7,19 @@
 
 class GzClient;
 
-#define CEREBRI_PORT 4243
-#define GZ_PORT 4241
-
 class UDPLink {
 private:
     static const uint32_t rx_buf_length_ = 1024;
     std::mutex guard_rx_buf_;
     uint8_t rx_buf_[rx_buf_length_];
     boost::asio::io_context io_context_ {};
-    boost::asio::ip::udp::socket sock_ {
-        boost::asio::ip::udp::socket(io_context_,
-            boost::asio::ip::udp::endpoint(
-                boost::asio::ip::udp::v4(), GZ_PORT))
-    };
+    boost::asio::ip::udp::socket sock_;
     boost::asio::ip::udp::endpoint remote_endpoint_;
     boost::asio::ip::udp::endpoint my_endpoint_;
 
 public:
     std::shared_ptr<GzClient> gz_ {};
-    UDPLink(std::string host, int port);
+    UDPLink(std::string host, int port, int port_srv);
     void run_for(std::chrono::seconds sec);
     void write(const uint8_t* buf, uint32_t len);
 
